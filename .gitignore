@@ -1,0 +1,17 @@
+venv/
+.idea/
+.DS_Store
+test.mid
+# Pycaches
+__pycache__/
+test*.mid
+all_tokens.txt
+special_tokens.txt
+data/
+*.zip
+*.pyc
+locals/
+data/
+scripts/
+*.pyc
+*.zip

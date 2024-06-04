@@ -1,0 +1,4 @@
+symusic==0.4.7
+scipy
+pretty_midi
+requests
