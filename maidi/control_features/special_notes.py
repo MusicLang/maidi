@@ -1,43 +1,51 @@
-
 from .parse_notes import parse_pitch
 
 
 INTERESTING_NOTES = [
-    ('s', 1),
-    ('s', 3),
-    ('s', 5),
-    ('h', 1),
-    ('h', 2),
-    ('h', 3),
-    ('h', 4),
-    ('h', 6),
-    ('h', 8),
-    ('h', 9),
-    ('h', 10),
-    ('h', 11),
+    ("s", 1),
+    ("s", 3),
+    ("s", 5),
+    ("h", 1),
+    ("h", 2),
+    ("h", 3),
+    ("h", 4),
+    ("h", 6),
+    ("h", 8),
+    ("h", 9),
+    ("h", 10),
+    ("h", 11),
 ]
 
+
 def get_token_names():
-    return ['CONTROL_SPECIAL_NOTE__' + note + str(idx) for note, idx in INTERESTING_NOTES]
+    """ """
+    return [
+        "CONTROL_SPECIAL_NOTE__" + note + str(idx) for note, idx in INTERESTING_NOTES
+    ]
 
 
 def get_special_notes_tags(track_bar, chord):
-    """
-    Create histogram of (type, idx) weighted per duration
-    :param track_bar:
-    :param chord:
-    :return:
+    """Create histogram of (type, idx) weighted per duration
+
+    Parameters
+    ----------
+    track_bar :
+        param chord:
+    chord :
+        
+
+    Returns
+    -------
+
     """
     notes = []
-    for idx_note in range(len(track_bar['time'])):
-        pitch = track_bar['pitch'][idx_note]
-        velocity = track_bar['velocity'][idx_note]
-        time = track_bar['time'][idx_note]
-        duration = track_bar['duration'][idx_note]
-        type, idx, oct = parse_pitch(pitch, chord, False,
-                                     is_absolute=False)
+    for idx_note in range(len(track_bar["time"])):
+        pitch = track_bar["pitch"][idx_note]
+        velocity = track_bar["velocity"][idx_note]
+        time = track_bar["time"][idx_note]
+        duration = track_bar["duration"][idx_note]
+        type, idx, oct = parse_pitch(pitch, chord, False, is_absolute=False)
         notes.append((type, idx, oct, velocity, time, duration))
-
 
     # Create histogram of (type, idx) weighted per duration
     special_notes = {}
@@ -62,6 +70,18 @@ def get_special_notes_tags(track_bar, chord):
 
 
 def get_special_notes_tokens(track_bar, chord):
-    special_notes = get_special_notes_tags(track_bar, chord)
-    return ['CONTROL_SPECIAL_NOTE__' + note + str(idx) for note, idx in special_notes]
+    """
 
+    Parameters
+    ----------
+    track_bar :
+        
+    chord :
+        
+
+    Returns
+    -------
+
+    """
+    special_notes = get_special_notes_tags(track_bar, chord)
+    return ["CONTROL_SPECIAL_NOTE__" + note + str(idx) for note, idx in special_notes]

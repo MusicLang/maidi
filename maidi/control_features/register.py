@@ -12,17 +12,29 @@ REGISTERS = {
     "lowest": (0, 36),
 }
 
-ORDERED_FROM_LOWEST = list(sorted(REGISTERS.keys(), key=lambda x: REGISTERS[x][0], reverse=True))
+ORDERED_FROM_LOWEST = list(
+    sorted(REGISTERS.keys(), key=lambda x: REGISTERS[x][0], reverse=True)
+)
 ORDERED_FROM_HIGHEST = list(sorted(REGISTERS.keys(), key=lambda x: REGISTERS[x][1]))
 
 LOW_PITCHES = [REGISTERS[x][0] for x in ORDERED_FROM_LOWEST]
 
 
 def get_min_max_registers(pitches: list[int]) -> list[str]:
-    """
-    Get highest register that encompasses min_pitch, and lowest register that encompasses max_pitch
-    :param pitches: List of pitch values
-    :return: Tuple containing the highest and lowest registers
+    """Get highest register that encompasses min_pitch, and lowest register that encompasses max_pitch
+
+    Parameters
+    ----------
+    pitches :
+        List of pitch values
+    pitches: list[int] :
+        
+
+    Returns
+    -------
+    type
+        Tuple containing the highest and lowest registers
+
     """
     pitches = set(pitches)
     if len(pitches) == 0:
@@ -51,12 +63,32 @@ def get_min_max_registers(pitches: list[int]) -> list[str]:
 
 
 def get_min_max_register_tokens(pitches: list[int]) -> list[str]:
+    """
+
+    Parameters
+    ----------
+    pitches: list[int] :
+        
+
+    Returns
+    -------
+
+    """
     registers = get_min_max_registers(pitches)
     if len(registers) == 0:
         return []
-    return ["CONTROL_MIN_REGISTER__" + registers[0], "CONTROL_MAX_REGISTER__" + registers[1]]
+    return [
+        "CONTROL_MIN_REGISTER__" + registers[0],
+        "CONTROL_MAX_REGISTER__" + registers[1],
+    ]
+
 
 def get_token_names():
-    min_tokens = ['CONTROL_MIN_REGISTER__' + register for register in ORDERED_FROM_LOWEST]
-    max_tokens = ['CONTROL_MAX_REGISTER__' + register for register in ORDERED_FROM_HIGHEST]
+    """ """
+    min_tokens = [
+        "CONTROL_MIN_REGISTER__" + register for register in ORDERED_FROM_LOWEST
+    ]
+    max_tokens = [
+        "CONTROL_MAX_REGISTER__" + register for register in ORDERED_FROM_HIGHEST
+    ]
     return min_tokens + max_tokens

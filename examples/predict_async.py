@@ -1,12 +1,13 @@
-
-from midi_parser import MusicLangScore
+from maidi import MidiScore
 
 
 # Assuming API_URL and API_KEY are set in the environment
 
 filepath = "examples/example1.mid"
 
-score = MusicLangScore.from_midi(filepath, chord_range=(0, 8)) # Load first 8 bars of a midi file
+score = MidiScore.from_midi(
+    filepath, chord_range=(0, 8)
+)  # Load first 8 bars of a midi file
 mask = score.get_mask()
 mask[:, :] = 1  # Regenerate everything in the score with the same instruments
 

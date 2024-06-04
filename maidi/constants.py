@@ -126,17 +126,16 @@ INSTRUMENTS_DICT = {
     "telephone_ring": 124,
     "helicopter": 125,
     "applause": 126,
-    "gunshot": 127
+    "gunshot": 127,
 }
 
 INSTRUMENTS_DICT = {
-    key: (val, 0) for key, val in INSTRUMENTS_DICT.items() # instrument, is_drum
+    key: (val, 0) for key, val in INSTRUMENTS_DICT.items()  # instrument, is_drum
 }
-INSTRUMENTS_DICT['drums_0'] = (0, 1)
+INSTRUMENTS_DICT["drums_0"] = (0, 1)
+INSTRUMENTS_DICT["drums"] = (0, 1)
 
-REVERSE_INSTRUMENT_DICT = {
-    val: key for key, val in INSTRUMENTS_DICT.items()
-}
+REVERSE_INSTRUMENT_DICT = {val: key for key, val in INSTRUMENTS_DICT.items()}
 
-API_URL_VARIABLE = 'API_URL'
-API_KEY_VARIABLE = 'API_KEY'
+API_URL_VARIABLE = "API_URL"
+API_KEY_VARIABLE = "API_KEY"

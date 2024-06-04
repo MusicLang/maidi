@@ -1,8 +1,8 @@
-
-from midi_parser.control_features.register import get_min_max_registers
+from maidi.control_features.register import get_min_max_registers
 
 
 def test_get_min_max_registers():
+    """ """
     assert get_min_max_registers([30, 40, 50]) == ["lowest", "contrabass"]
     assert get_min_max_registers([80, 90, 100]) == ["sopranissimo", "highest"]
     assert get_min_max_registers([45, 55, 65]) == ["baritone", "baritone"]
@@ -14,4 +14,5 @@ def test_get_min_max_registers():
 
 
 def test_get_min_max_registers_empty():
+    """ """
     assert get_min_max_registers([]) == []
