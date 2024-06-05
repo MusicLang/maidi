@@ -1,4 +1,3 @@
-Below an image : 
 ![M(AI)DI](assets/logo2.webp)
 
 
