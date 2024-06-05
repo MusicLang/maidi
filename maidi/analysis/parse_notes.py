@@ -1,4 +1,4 @@
-from maidi.chord_inference_utils import SCALES
+from maidi.chords.chord_inference_utils import SCALES
 
 
 def to_pitch(type, idx, oct, chord):

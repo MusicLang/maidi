@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import patch
-from maidi.control_features.special_notes import get_special_notes_tags, get_token_names
-
+from maidi.analysis.control_features.special_notes import _get_special_notes_tags
 
 # Define some constants for test cases
 TRACK_BAR_1 = {
@@ -31,7 +30,7 @@ CHORD = "Cmaj7"
 @pytest.fixture
 def mock_parse_pitch():
     """ """
-    with patch("musiclang_parser.control_features.special_notes.parse_pitch") as mock:
+    with patch("maidi.analysis.control_features.special_notes.parse_pitch") as mock:
         yield mock
 
 
@@ -55,7 +54,7 @@ def test_get_special_notes_tags_case_1(mock_parse_pitch):
         ("s", 0, 4),  # Not interesting
     ]
 
-    result = get_special_notes_tags(TRACK_BAR_1, CHORD)
+    result = _get_special_notes_tags(TRACK_BAR_1, CHORD)
     assert result == [("s", 1), ("s", 3)]
 
 
@@ -78,7 +77,7 @@ def test_get_special_notes_tags_case_2(mock_parse_pitch):
         ("s", 0, 4),  # Not interesting
     ]
 
-    result = get_special_notes_tags(TRACK_BAR_2, CHORD)
+    result = _get_special_notes_tags(TRACK_BAR_2, CHORD)
     assert result == [("s", 1), ("h", 1), ("h", 2)]
 
 
@@ -103,7 +102,7 @@ def test_get_special_notes_tags_case_3(mock_parse_pitch):
         ("s", 0, 4),  # Not interesting
     ]
 
-    result = get_special_notes_tags(TRACK_BAR_3, CHORD)
+    result = _get_special_notes_tags(TRACK_BAR_3, CHORD)
     assert result == [
         ("s", 1),
         ("s", 3),
@@ -136,7 +135,7 @@ def test_get_special_notes_tags_case_with_normalization(mock_parse_pitch):
         "duration": [2, 2, 2, 4],  # The last note has the longest duration
     }
 
-    result = get_special_notes_tags(track_bar, CHORD)
+    result = _get_special_notes_tags(track_bar, CHORD)
     assert result == [("s", 1), ("h", 2)]
 
 
@@ -156,7 +155,7 @@ def test_get_special_notes_tags_case_empty_bar(mock_parse_pitch):
 
     track_bar = {"pitch": [], "velocity": [], "time": [], "duration": []}
 
-    result = get_special_notes_tags(track_bar, CHORD)
+    result = _get_special_notes_tags(track_bar, CHORD)
     assert result == []
 
 

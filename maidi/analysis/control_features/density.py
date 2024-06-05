@@ -1,3 +1,32 @@
+from maidi import MidiScore
+from maidi.analysis import TagsProvider
+
+
+def get_tags_names():
+    """ """
+    return [
+        "CONTROL_DENSITY__" + density
+        for density in [
+            "LOWEST",
+            "LOWER",
+            "LOW",
+            "MEDIUM_LOW",
+            "MEDIUM",
+            "HIGH",
+            "VERY_HIGH",
+        ]
+    ]
+
+
+class DensityTagsProvider(TagsProvider):
+    ALL_TAGS = get_tags_names()
+
+    def get_tags(self, track_bar, chord, score):
+        from maidi.utils.chord_helpers import chord_to_bar_duration_in_quarters
+        notes = self.get_start_end_notes(track_bar, chord, score)
+        bar_duration = chord_to_bar_duration_in_quarters(chord)
+        return get_density_tags(notes, bar_duration)
+
 def get_density_value(density):
     """From density in notes per quarters returns a density string in
     [LOWEST, LOWER, LOW, MEDIUM, MEDIUM_LOW HIGH, VERY_HIGH]
@@ -28,20 +57,6 @@ def get_density_value(density):
         return "VERY_HIGH"
 
 
-def get_token_names():
-    """ """
-    return [
-        "CONTROL_DENSITY__" + density
-        for density in [
-            "LOWEST",
-            "LOWER",
-            "LOW",
-            "MEDIUM_LOW",
-            "MEDIUM",
-            "HIGH",
-            "VERY_HIGH",
-        ]
-    ]
 
 
 def get_density(notes, bar_duration):
@@ -66,7 +81,7 @@ def get_density(notes, bar_duration):
     return get_density_value(density)
 
 
-def get_density_tokens(notes, bar_duration):
+def get_density_tags(notes, bar_duration):
     """
 
     Parameters
@@ -82,3 +97,5 @@ def get_density_tokens(notes, bar_duration):
     """
     density = get_density(notes, bar_duration)
     return ["CONTROL_DENSITY__" + density]
+
+

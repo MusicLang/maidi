@@ -1,3 +1,5 @@
+from maidi.analysis import TagsProvider
+
 REGISTERS = {
     "highest": (81, 130),
     "sopranissimo": (74, 95),
@@ -18,6 +20,35 @@ ORDERED_FROM_LOWEST = list(
 ORDERED_FROM_HIGHEST = list(sorted(REGISTERS.keys(), key=lambda x: REGISTERS[x][1]))
 
 LOW_PITCHES = [REGISTERS[x][0] for x in ORDERED_FROM_LOWEST]
+
+
+
+
+
+
+def get_tags_names():
+    """
+
+    Returns
+    -------
+
+    """
+    min_tokens = [
+        "CONTROL_MIN_REGISTER__" + register for register in ORDERED_FROM_LOWEST
+    ]
+    max_tokens = [
+        "CONTROL_MAX_REGISTER__" + register for register in ORDERED_FROM_HIGHEST
+    ]
+    return min_tokens + max_tokens
+
+
+class MinMaxRegisterTagsProvider(TagsProvider):
+    ALL_TAGS = get_tags_names()
+
+    def get_tags(self, track_bar, chord, score):
+        pitches = self.get_pitches(track_bar, chord, score)
+        return get_min_max_register_tags(pitches)
+
 
 
 def get_min_max_registers(pitches: list[int]) -> list[str]:
@@ -62,13 +93,13 @@ def get_min_max_registers(pitches: list[int]) -> list[str]:
     return [min_register, max_register]
 
 
-def get_min_max_register_tokens(pitches: list[int]) -> list[str]:
+def get_min_max_register_tags(pitches: list[int]) -> list[str]:
     """
 
     Parameters
     ----------
     pitches: list[int] :
-        
+
 
     Returns
     -------

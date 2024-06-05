@@ -1,3 +1,31 @@
+
+from maidi.analysis import TagsProvider
+
+
+MAX_MIN_POLYPHONY = 6
+MAX_MAX_POLYPHONY = 6
+
+def get_tags_names():
+    """
+
+    Returns
+    -------
+
+    """
+    return [
+        "CONTROL_MIN_POLYPHONY__" + str(i) for i in range(MAX_MIN_POLYPHONY)
+    ] + [
+        "CONTROL_MAX_POLYPHONY__" + str(i) for i in range(MAX_MAX_POLYPHONY)
+    ]
+
+
+class MinMaxPolyphonyTagsProvider(TagsProvider):
+    ALL_TAGS = get_tags_names()
+
+    def get_tags(self, track_bar, chord, score):
+        notes = self.get_start_end_notes(track_bar, chord, score)
+        return get_min_max_polyphony_tags(notes)
+
 def get_max_polyphony(notes):
     """
 
@@ -74,3 +102,44 @@ def get_min_polyphony(notes):
 
     # If min_count was never updated, return 0, otherwise, return min_count
     return min_count if min_count != float("inf") else 0
+
+
+
+
+def get_min_polyphony_tags(notes):
+    """
+
+    Parameters
+    ----------
+    notes :
+    """
+
+    return ["CONTROL_MIN_POLYPHONY__" + str(get_min_polyphony(notes))]
+
+def get_max_polyphony_tags(notes):
+    """
+
+    Parameters
+    ----------
+    notes :
+
+
+    Returns
+    -------
+
+    """
+    return ["CONTROL_MAX_POLYPHONY__" + str(get_max_polyphony(notes))]
+
+def get_min_max_polyphony_tags(notes):
+    """
+
+    Parameters
+    ----------
+    notes :
+
+
+    Returns
+    -------
+
+    """
+    return get_min_polyphony_tags(notes) + get_max_polyphony_tags(notes)

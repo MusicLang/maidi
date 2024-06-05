@@ -4,28 +4,182 @@ from fractions import Fraction as frac
 from symusic import Track, TimeSignature, Note, Score, Tempo
 import time
 
-from .chord_inference import fast_chord_inference
+from maidi.chords.chord_inference import fast_chord_inference
 
 
 class Parser:
-    """Parser class to extract and write midi files"""
+    """
+    Low level parser class to read and write midi files
+    You probably don't need to use this class directly, use MidiScore instead
 
-    def __init__(self, debug=False, separate_voices=False, tpq=24, min_dur=1):
+    Usage:
+    ------
+    ```python
+
+    from maidi.parser import Parser
+    parser = Parser()
+    chords, tracks, track_keys, tempo = parser.parse("input.mid")
+    score = parser.write(chords, tracks, track_keys, tempo)
+    score.dump_midi("output.mid")
+
+    ```
+    """
+
+    def __init__(self, verbose=False, tpq=24, min_dur=1):
+        """
+        Initialize the parser
+        Parameters
+        ----------
+        verbose : bool
+            Whether to print debug information
+        tpq : int (Default value = 24)
+            Ticks per quarter note for the midi file, it will be resampled to this value
+        min_dur : int (Default value = 1)
+            Minimum duration for a note in ticks
+        """
         self.tpq = tpq
         self.min_dur = min_dur
-        self.debug = debug
-        self.separate_voices = separate_voices
+        self.verbose = verbose
 
-    def get_bars(self, score):
+    def parse(self, midi_file, chord_range=None):
         """
 
         Parameters
         ----------
-        score :
-            
+        midi_file : str
+            Path to the midi file to parse
+
+        chord_range : tuple or None (Default value = None)
+            Tuple with the start and end chord index to parse. If None, parse the whole file
 
         Returns
         -------
+        chords : list
+            List of chords with the time signature of each bar
+        tracks : dict
+            Dict of arrays with the notes for each track
+        track_keys : list
+            List of tuples with the track keys (program, is_drum, voice)
+
+        """
+        start = time.time()
+        score_quantized = self._preload_score(midi_file)
+        tempo = (
+            score_quantized.tempos[0].qpm if len(score_quantized.tempos) > 0 else 120
+        )
+
+        self.pprint("Resampling time: ", time.time() - start)
+        start = time.time()
+        bars, chord_durations = self._get_bars(score_quantized)
+        self.pprint("Getting bars time: ", time.time() - start)
+        tracks = {}
+        track_keys = []
+        tracks_global = {}
+        start = time.time()
+
+        if chord_range is None:
+            chord_range = (0, len(bars))
+
+
+        for idx, track in enumerate(score_quantized.tracks):
+            is_drum = track.is_drum
+            program = track.program if not is_drum else 0
+            score_soa = track.notes.numpy()  # Convert to a dict of arrays
+            track_keys.append((idx, program, is_drum))
+            # Get track between chord range
+            if chord_range is not None:
+                start_time = bars[chord_range[0]][0]
+                last_chord_index = min(chord_range[1], len(bars)) - 1
+                end_time = bars[last_chord_index][1]
+                mask = (score_soa["time"] >= start_time) & (
+                        score_soa["time"] < end_time
+                )
+                for k, v in score_soa.items():
+                    score_soa[k] = v[mask]
+
+            score_soa["bar"] = self._get_bar_nb_array_optimized(score_soa, bars)
+            score_soa["start_bar_tick"] = np.array(
+                [bars[bar_nb][0] for bar_nb in score_soa["bar"]]
+            )
+            score_soa["time"] -= score_soa["start_bar_tick"]  # Make time relative to the start of the bar
+            del score_soa["start_bar_tick"]
+            # Group SOA by bar
+            grouped_score = self._groupby_bar(score_soa, bars)
+            # If chord range is specified, keep only the specified chords
+            if chord_range is not None:
+                grouped_score = grouped_score[chord_range[0]: chord_range[1]]
+
+            tracks[(idx, program, is_drum)] = grouped_score
+
+        self.pprint("Grouping time: ", time.time() - start)
+        # Now we have a dict of arrays for each track, grouped by bar, let's do the chord inference
+        start = time.time()
+        chords = fast_chord_inference(tracks, chord_durations)
+        chords = [
+            list(c) + list(b) for c, b in zip(chords, bars)
+        ]  # Add bar start, bar end
+        self.pprint("Chord inference time: ", time.time() - start)
+        return chords, tracks, track_keys, tempo
+
+    def write(self, chords, tracks, track_keys, tempo):
+        """
+        Write a score from the parsed data.
+        You probably don't need to use this method directly, use MidiScore.write instead
+
+        Parameters
+        ----------
+        chords : list
+            List of chords with the time signature of each bar
+
+        tracks : dict
+            Dict of arrays with the notes for each track
+
+        track_keys : list
+            List of tuples with the track keys (program, is_drum, voice)
+
+        tempo : float
+            Tempo of the score
+
+
+        Returns
+        -------
+        score : symusic.Score object
+            The score object on which you can call dump_midi to save it to a file
+
+        """
+        score = Score(ttype=self.tpq)
+        score.tempos.append(Tempo(0, tempo))
+        current_ts = None
+        for chord in chords:
+            ts = TimeSignature(chord[7], chord[5], chord[6])
+            candidate_ts = (ts.numerator, ts.denominator)
+            if current_ts != candidate_ts:
+                score.time_signatures.append(ts)
+                current_ts = (
+                    (ts.numerator, ts.denominator) if current_ts is None else current_ts
+                )
+
+        for track_key in track_keys:
+            idx, program, is_drum = track_key
+            track = Track(program=program, is_drum=is_drum)
+            track.notes = tracks[(idx, program, is_drum)]
+            score.tracks.append(track)
+        return score
+
+    def _get_bars(self, score):
+        """
+        Get the bars of a score
+        Parameters
+        ----------
+        score : symusic.Score object
+            The score to get the bars from
+
+        Returns
+        -------
+        bars : list
+            List of tuples with the start and end time of each bar in ticks
+        chord_durations: list
+            List of tuples with the time signature of each bar
 
         """
         # Calculate bars
@@ -39,7 +193,7 @@ class Parser:
         bars = []
         while time < score.end():
             start_time = time
-            end_time, num, den = self.get_end_of_bar(
+            end_time, num, den = self._get_end_of_bar(
                 time, time_signatures, ticks_per_quarter
             )
             chord_durations.append((num, den))
@@ -47,18 +201,21 @@ class Parser:
             time = end_time
         return bars, chord_durations
 
-    def get_bar_nb_array_optimized(self, note_times, bars):
+    def _get_bar_nb_array_optimized(self, note_times, bars):
         """
-
+        Get the bar number for each note in an optimized way
         Parameters
         ----------
-        note_times :
+        note_times : dict
+            Dictionary with time key containing the note times
             
-        bars :
-            
+        bars : list
+            List of tuples with the start and end time of each bar in ticks
 
         Returns
         -------
+        bar_indices : np.array
+            Array with the bar index for each note
 
         """
         # Convert bars to a NumPy array for efficient computation
@@ -82,20 +239,30 @@ class Parser:
 
         return bar_indices
 
-    def get_end_of_bar(self, bar_start, time_signatures, ticks_per_quarter):
+    def _get_end_of_bar(self, bar_start, time_signatures, ticks_per_quarter):
         """
+        Get the end of a bar given the start of the bar
 
         Parameters
         ----------
-        bar_start :
+        bar_start : int
+            The start of the bar in ticks
             
-        time_signatures :
-            
-        ticks_per_quarter :
-            
+        time_signatures : list
+            List of time signatures for the score
+
+        ticks_per_quarter : int
+            Ticks per quarter note for the midi file
+
 
         Returns
         -------
+        end: int
+            The end of the bar in ticks
+        num: int
+            The numerator of the time signature for the current bar
+        den: int
+            The denominator of the time signature for the current bar
 
         """
         # Find time signature
@@ -112,7 +279,7 @@ class Parser:
         duration = 4 * frac(num, den)
         return int(bar_start + duration * ticks_per_quarter), num, den
 
-    def groupby_bar(self, score_soa, bars):
+    def _groupby_bar(self, score_soa, bars):
         """
 
         Parameters
@@ -136,59 +303,6 @@ class Parser:
         ]
         return result
 
-    def groupby_voices(self, tracks, program_voices_offset):
-        """
-
-        Parameters
-        ----------
-        tracks :
-            
-        program_voices_offset :
-            
-
-        Returns
-        -------
-
-        """
-        new_tracks = {}
-        for track_key, bars in tracks.items():
-            # Determine the number of bars to ensure every voice has an entry for each bar
-            num_bars = len(bars)
-
-            # Initialize track_voices with an entry for each voice for each bar, even if empty
-            track_voices = {}
-            for bar_idx, bar in enumerate(bars):
-                if "voices" in bar:
-                    unique_voices = np.unique(bar["voices"])
-                else:
-                    unique_voices = [0]  # Default voice if not specified
-
-                for voice in unique_voices:
-                    voice_key = (*track_key, voice)
-                    if voice_key not in track_voices:
-                        # Initialize with empty lists for each bar to ensure perfect mapping
-                        track_voices[voice_key] = [{} for _ in range(num_bars)]
-
-                    if "voices" in bar:
-                        # Select notes belonging to the current voice
-                        mask = bar["voices"] == voice
-                        bar_for_voice = {
-                            k: v[mask] for k, v in bar.items() if k != "voices"
-                        }
-                    else:
-                        # If no voice separation, use the bar as is
-                        bar_for_voice = bar
-
-                    # Update the specific bar for the voice
-                    track_voices[voice_key][bar_idx] = bar_for_voice
-
-            # Update new_tracks with segregated bars
-            new_tracks.update(track_voices)
-
-        # Replace original tracks with newly segregated ones
-        tracks.clear()
-        tracks.update(new_tracks)
-
     def pprint(self, *text):
         """
 
@@ -201,369 +315,28 @@ class Parser:
         -------
 
         """
-        if self.debug:
+        if self.verbose:
             print(*text)
 
-    def get_notes(self, bars, score):
+
+    def _preload_score(self, midi_file):
         """
+        Quantize the score to the desired tpq and min_dur
 
         Parameters
         ----------
-        bars :
-            
-        score :
+        midi_file : str
+            Path to the midi file to parse
             
 
         Returns
         -------
+        score_quantized : symusic.Score object
+            The quantized score object
 
         """
-        tracks = [t.notes for t in score.tracks if len(t.notes) > 0]
-        data = {"bars": [], "tracks": []}
-        for track in tracks:
-            track_notes = []
-            for idx, bar in enumerate(bars):
-                start_bar, end_bar = bar
-                data["bars"].append({"start": start_bar, "end": end_bar})
-                # Transform to time, duration, pitch, velocity
-                bar_notes = [
-                    [n.time - start_bar, n.duration, n.pitch, n.velocity]
-                    for n in track
-                    if start_bar <= n.time < end_bar
-                ]
-                track_notes.append(bar_notes)
-            data["tracks"].append(track_notes)
-
-        return data
-
-    @staticmethod
-    def add_default_track_events(track):
-        """
-
-        Parameters
-        ----------
-        track :
-            
-
-        Returns
-        -------
-
-        """
-        from symusic import ControlChange
-
-        # track.controls = [ControlChange(0, 0, 0)]
-        track.notes = [Note(0, 2, 60, 1)]
-
-    def add_track(self, midi_file, output_midi_file, instrument):
-        """Add a track to the midi file and save it
-
-        Parameters
-        ----------
-        midi_file :
-            param program:
-        is_drum :
-            return:
-        output_midi_file :
-            
-        instrument :
-            
-
-        Returns
-        -------
-
-        """
-        program, is_drum = instrument
-        score_quantized = self.preload_score(midi_file)
-        track = Track(program=program, is_drum=bool(is_drum))
-        self.add_default_track_events(track)
-        score_quantized.tracks.append(track)
-        score_quantized.dump_midi(output_midi_file)
-
-    def remove_track(self, midi_file, output_midi_file, index):
-        """
-
-        Parameters
-        ----------
-        midi_file :
-            
-        output_midi_file :
-            
-        index :
-            
-
-        Returns
-        -------
-
-        """
-        score_quantized = self.preload_score(midi_file)
-        score_quantized.tracks.pop(index)
-        score_quantized.dump_midi(output_midi_file)
-
-    def change_program(self, file, output_file, track, param):
-        """
-
-        Parameters
-        ----------
-        file :
-            
-        output_file :
-            
-        track :
-            
-        param :
-            
-
-        Returns
-        -------
-
-        """
-
-        program, is_drum = param
-        score = symusic.Score(file, ttype="tick")
-        score_quantized = score.resample(tpq=self.tpq, min_dur=self.min_dur)
-        score_quantized.tracks[track].program = program
-        score_quantized.tracks[track].is_drum = bool(is_drum)
-        score_quantized.dump_midi(output_file)
-
-    def preload_score(self, midi_file):
-        """
-
-        Parameters
-        ----------
-        midi_file :
-            
-
-        Returns
-        -------
-
-        """
-        from symusic import Track
 
         score = symusic.Score(midi_file, ttype="tick")
         score_quantized = score.resample(tpq=self.tpq, min_dur=self.min_dur)
         return score_quantized
 
-    def add_tracks(self, midi_file, output_midi_file, programs):
-        """
-
-        Parameters
-        ----------
-        midi_file :
-            
-        output_midi_file :
-            
-        programs :
-            
-
-        Returns
-        -------
-
-        """
-        score_quantized = self.preload_score(midi_file)
-        for program, is_drum in programs:
-            track = Track(program=program, is_drum=is_drum == 1)
-            self.add_default_track_events(track)
-            score_quantized.tracks.append(track)
-        score_quantized.dump_midi(output_midi_file)
-
-    def get_base_masking_grid(self, midi_file, chord_range=None):
-        """
-
-        Parameters
-        ----------
-        midi_file :
-            
-        chord_range :
-             (Default value = None)
-
-        Returns
-        -------
-
-        """
-        score = symusic.Score(midi_file, ttype="tick")
-        score_quantized = score.resample(tpq=self.tpq, min_dur=self.min_dur)
-        bars, chord_durations = self.get_bars(score_quantized)
-
-        # Create a masking grid with 0 of size num_tracks x num_bars
-        masking_grid = np.zeros((len(score_quantized.tracks), len(bars)), dtype=np.int8)
-        return masking_grid
-
-    def get_mask_and_tracks(self, midi_file, chord_range=None):
-        """
-
-        Parameters
-        ----------
-        midi_file :
-            
-        chord_range :
-             (Default value = None)
-
-        Returns
-        -------
-
-        """
-        from .constants import REVERSE_INSTRUMENT_DICT
-
-        score = symusic.Score(midi_file, ttype="tick")
-        score_quantized = score.resample(tpq=self.tpq, min_dur=self.min_dur)
-        bars, chord_durations = self.get_bars(score_quantized)
-
-        if chord_range is None:
-            chord_range = (0, len(bars))
-        last_chord_index = min(chord_range[1], len(bars)) - 1
-        end_time = bars[last_chord_index][1]
-        start_time = bars[chord_range[0]][0]
-        # Create a masking grid with 0 of size num_tracks x num_bars
-        masking_grid = np.zeros((len(score_quantized.tracks), len(bars)), dtype=np.int8)
-        tracks = []
-        for idx, track in enumerate(score_quantized.tracks):
-            is_drum = track.is_drum
-            program = track.program if not is_drum else 0
-            instrument = REVERSE_INSTRUMENT_DICT.get((program, is_drum), "piano")
-            track.notes = [n for n in track.notes if start_time <= n.time < end_time]
-            # If track empty add notes
-            tracks.append(instrument)
-            if len(track.notes) == 0:
-                # Add a fake control change to prevent empty track from being removed
-                self.add_default_track_events(track)
-
-        bars = bars[chord_range[0] : chord_range[1]]
-        notes = self.get_notes(bars, score_quantized)
-        return masking_grid, tracks, score_quantized, notes
-
-    def write(self, chords, tracks, track_keys, tempo):
-        """
-
-        Parameters
-        ----------
-        chords :
-            
-        tracks :
-            
-        track_keys :
-            
-        tempo :
-            
-
-        Returns
-        -------
-
-        """
-        score = Score(ttype=self.tpq)
-        score.tempos.append(Tempo(0, tempo))
-        current_ts = None
-        for chord in chords:
-            ts = TimeSignature(chord[7], chord[5], chord[6])
-            candidate_ts = (ts.numerator, ts.denominator)
-            if current_ts != candidate_ts:
-                score.time_signatures.append(ts)
-                current_ts = (
-                    (ts.numerator, ts.denominator) if current_ts is None else current_ts
-                )
-
-        for track_key in track_keys:
-            idx, program, is_drum, voice = track_key
-            track = Track(program=program, is_drum=is_drum)
-            track.notes = tracks[(idx, program, is_drum, voice)]
-            score.tracks.append(track)
-        return score
-
-    def extract_midi(self, output_midi_file, midi_file, chord_range=None):
-        """
-
-        Parameters
-        ----------
-        output_midi_file :
-            
-        midi_file :
-            
-        chord_range :
-             (Default value = None)
-
-        Returns
-        -------
-
-        """
-        chords, tracks, track_keys, tempo = self.parse(midi_file, chord_range)
-        score = self.write(chords, tracks, track_keys, tempo)
-        score.dump_midi(output_midi_file)
-
-    def parse(self, midi_file, chord_range=None, from_end=False):
-        """
-
-        Parameters
-        ----------
-        midi_file :
-            
-        chord_range :
-             (Default value = None)
-        from_end :
-             (Default value = False)
-
-        Returns
-        -------
-
-        """
-        start = time.time()
-        score_quantized = self.preload_score(midi_file)
-        tempo = (
-            score_quantized.tempos[0].qpm if len(score_quantized.tempos) > 0 else 120
-        )
-
-        self.pprint("Resampling time: ", time.time() - start)
-        start = time.time()
-        bars, chord_durations = self.get_bars(score_quantized)
-        self.pprint("Getting bars time: ", time.time() - start)
-        tracks = {}
-        track_keys = []
-        tracks_global = {}
-        start = time.time()
-
-        if chord_range is None:
-            chord_range = (0, len(bars))
-
-        program_voices_offset = {}
-
-        for idx, track in enumerate(score_quantized.tracks):
-            is_drum = track.is_drum
-            program = track.program if not is_drum else 0
-            score_soa = track.notes.numpy()  # Convert to a dict of arrays
-            track_keys.append((idx, program, is_drum, 0))
-            # Get track between chord range
-            if chord_range is not None:
-                start_time = bars[chord_range[0]][0]
-                last_chord_index = min(chord_range[1], len(bars)) - 1
-                end_time = bars[last_chord_index][1]
-                mask = (score_soa["time"] >= start_time) & (
-                    score_soa["time"] < end_time
-                )
-                for k, v in score_soa.items():
-                    score_soa[k] = v[mask]
-
-            score_soa["bar"] = self.get_bar_nb_array_optimized(score_soa, bars)
-            score_soa["start_bar_tick"] = np.array(
-                [bars[bar_nb][0] for bar_nb in score_soa["bar"]]
-            )
-            score_soa["time"] -= score_soa["start_bar_tick"]
-            del score_soa["start_bar_tick"]
-            # Group SOA by bar
-            grouped_score = self.groupby_bar(score_soa, bars)
-            # If chord range is specified, keep only the specified chords
-            if chord_range is not None:
-                grouped_score = grouped_score[chord_range[0] : chord_range[1]]
-
-            tracks[(idx, program, is_drum)] = grouped_score
-
-        self.pprint("Grouping time: ", time.time() - start)
-        start = time.time()
-        # Now we have a dict of arrays for each track, grouped by bar, let's do the voice separation
-        start = time.time()
-        chords = fast_chord_inference(tracks, chord_durations)
-        chords = [
-            list(c) + list(b) for c, b in zip(chords, bars)
-        ]  # Add bar start, bar end
-        self.pprint("Chord inference time: ", time.time() - start)
-        start = time.time()
-        self.groupby_voices(tracks, program_voices_offset)
-        self.pprint("Voice groupby time: ", time.time() - start)
-        return chords, tracks, track_keys, tempo

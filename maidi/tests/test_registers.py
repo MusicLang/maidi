@@ -1,4 +1,4 @@
-from maidi.control_features.register import get_min_max_registers
+from maidi.analysis.control_features import get_min_max_registers
 
 
 def test_get_min_max_registers():

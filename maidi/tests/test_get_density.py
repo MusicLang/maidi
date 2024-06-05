@@ -1,8 +1,13 @@
 import pytest
-from maidi.control_features.density import (
-    get_density,
+from maidi.analysis.control_features import (
+    get_density_tags,
+
+)
+
+from maidi.analysis.control_features.density import (
     get_density_value,
-    get_token_names,
+    get_density,
+    get_tags_names, DensityTagsProvider,
 )
 
 
@@ -82,7 +87,13 @@ def test_get_token_names():
         "CONTROL_DENSITY__HIGH",
         "CONTROL_DENSITY__VERY_HIGH",
     ]
-    assert get_token_names() == expected_token_names
+    assert get_tags_names() == expected_token_names
+
+
+def test_density_provider_tags_list():
+    """ """
+    provider = DensityTagsProvider()
+    assert provider.get_tags_list() == get_tags_names()
 
 
 if __name__ == "__main__":

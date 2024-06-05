@@ -1,5 +1,5 @@
-from .parse_notes import parse_pitch
-
+from maidi.analysis.parse_notes import parse_pitch
+from maidi.analysis import TagsProvider
 
 INTERESTING_NOTES = [
     ("s", 1),
@@ -17,14 +17,20 @@ INTERESTING_NOTES = [
 ]
 
 
-def get_token_names():
+def get_tags_names():
     """ """
     return [
         "CONTROL_SPECIAL_NOTE__" + note + str(idx) for note, idx in INTERESTING_NOTES
     ]
 
 
-def get_special_notes_tags(track_bar, chord):
+class SpecialNotesTagsProvider(TagsProvider):
+    ALL_TAGS = get_tags_names()
+
+    def get_tags(self, track_bar, chord, score):
+        return get_special_notes_tags(track_bar, chord)
+
+def _get_special_notes_tags(track_bar, chord):
     """Create histogram of (type, idx) weighted per duration
 
     Parameters
@@ -69,7 +75,7 @@ def get_special_notes_tags(track_bar, chord):
     return interesting_notes
 
 
-def get_special_notes_tokens(track_bar, chord):
+def get_special_notes_tags(track_bar, chord):
     """
 
     Parameters
@@ -83,5 +89,5 @@ def get_special_notes_tokens(track_bar, chord):
     -------
 
     """
-    special_notes = get_special_notes_tags(track_bar, chord)
+    special_notes = _get_special_notes_tags(track_bar, chord)
     return ["CONTROL_SPECIAL_NOTE__" + note + str(idx) for note, idx in special_notes]

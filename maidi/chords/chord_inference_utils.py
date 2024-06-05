@@ -50,10 +50,10 @@ SCALES = {"M": [0, 2, 4, 5, 7, 9, 11], "m": [0, 2, 3, 5, 7, 8, 11]}
 
 
 this_file_path = os.path.dirname(os.path.realpath(__file__))
-pitch_class_dict_path = os.path.join(this_file_path, "metadata/pitch_classes_dict.pkl")
-pitches_dict_path = os.path.join(this_file_path, "metadata/pitches_dict.pkl")
+pitch_class_dict_path = os.path.join(this_file_path, "../metadata/pitch_classes_dict.pkl")
+pitches_dict_path = os.path.join(this_file_path, "../metadata/pitches_dict.pkl")
 pitches_dict_roots_path = os.path.join(
-    this_file_path, "metadata/pitches_dict_roots.pkl"
+    this_file_path, "../metadata/pitches_dict_roots.pkl"
 )
 with open(pitch_class_dict_path, "rb") as f:
     PITCH_CLASSES_DICT = pickle.load(f)

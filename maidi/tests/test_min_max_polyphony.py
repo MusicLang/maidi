@@ -1,7 +1,6 @@
-import pytest
-from maidi.control_features.polyphony import (
-    get_max_polyphony,
+from maidi.analysis.control_features.polyphony import (
     get_min_polyphony,
+    get_max_polyphony,
 )  # Assume your functions are in 'your_module'
 
 

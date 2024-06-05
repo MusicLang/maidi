@@ -1,0 +1,3 @@
+pytest
+pretty_midi
+setuptools

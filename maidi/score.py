@@ -61,6 +61,10 @@ class MidiScore:
         return score
 
     @property
+    def shape(self):
+        """ """
+        return len(self.track_keys), len(self.chords)
+    @property
     def nb_tracks(self):
         """ """
         return len(self.track_keys)
@@ -85,6 +89,158 @@ class MidiScore:
             midi_file.flush()
             score = cls.from_midi(midi_file.name, tpq=tpq)
         return score
+
+
+    def __getitem__(self, item):
+        score = self
+        if isinstance(item, tuple):
+            first_dim, second_dim = item
+            subtrack_score = score.get_tracks(first_dim)
+            return subtrack_score.get_bars(second_dim)
+
+        if isinstance(item, (slice, int)):
+            return score.get_tracks(item)
+
+    def __setitem__(self, item, value):
+        if not isinstance(value, MidiScore):
+            raise TypeError("Value must be a MidiScore instance")
+
+        if isinstance(item, int):
+            # Single integer index implies updating a specific track across all tracks
+            track_indexes = [item]
+
+            # Ensure the value has the same structure
+            if len(value.shape[0]) != 1:
+                raise ValueError("The provided MidiScore must have one track")
+            if len(value.shape[1]) != len(self.chords):
+                raise ValueError("The provided MidiScore must have the same number of bars")
+
+            # Update the track notes
+            self.assign_tracks(track_indexes, value)
+
+        elif isinstance(item, slice):
+            start, end = item.start, item.stop
+            if start is None and end is None:
+                return value
+            start = start if start is not None else 0
+            end = end if end is not None else len(self.track_keys)
+            track_indexes = range(start, end)
+            self.assign_tracks(track_indexes, value)
+
+        if isinstance(item, tuple):
+
+            first_dim, second_dim = item
+            if isinstance(first_dim, int):
+                first_dim = slice(first_dim, first_dim + 1)
+            if isinstance(second_dim, int):
+                second_dim = slice(second_dim, second_dim + 1)
+
+            start_first_dim = first_dim.start if first_dim.start is not None else 0
+            end_first_dim = first_dim.stop if first_dim.stop is not None else len(self.track_keys)
+            start_second_dim = second_dim.start if second_dim.start is not None else 0
+            end_second_dim = second_dim.stop if second_dim.stop is not None else len(self.chords)
+
+            receiver_shape = (end_first_dim - start_first_dim, end_second_dim - start_second_dim)
+            value_shape = value.shape
+            if receiver_shape != value_shape:
+                raise ValueError(f"Shapes do not match: {receiver_shape} != {value_shape}")
+
+            self.assign_tracks(range(start_first_dim, end_first_dim), value, bar_range=(start_second_dim, end_second_dim))
+
+        else:
+            raise TypeError("Index must be an int or a tuple of two ints")
+
+    def __iter__(self):
+        return iter(self.track_keys)
+
+    def __len__(self):
+        return len(self.track_keys)
+
+    def assign_tracks(self, track_indexes, other_score, bar_range=None):
+        """
+        Assign some tracks of the other_score to the current score
+        """
+        # Update the track notes
+        for idx, track_index in enumerate(track_indexes):
+            value_track = other_score.track_keys[idx]
+            self_track = self.track_keys[track_index]
+            if bar_range is None:
+                for bar_idx in range(len(self.chords)):
+                    self.tracks[self_track][bar_idx] = other_score.tracks[value_track][bar_idx]
+            else:
+                for abs_idx, bar_idx in enumerate(range(*bar_range)):
+                    self.tracks[self_track][bar_idx] = other_score.tracks[value_track][abs_idx]
+
+    def get_track_from_index(self, index):
+        return self.tracks[self.track_keys[index]]
+
+    def get_track_bar(self, idx_track, idx_bar):
+        return self.tracks[self.track_keys[idx_track]][idx_bar]
+
+    def get_chords_prompt(self):
+        kept_indexes = [self.SCALE_DEGREE_INDEX, self.TONALITY_INDEX, self.MODE_INDEX, self.CHORD_EXTENSION_INDEX]
+        return [[chord[index] for index in kept_indexes] for chord in self.chords]
+    def get_bars(self, item):
+        """
+        Get the bars between the start and end index
+
+        slice: int or Slice, slice object
+        """
+        if isinstance(item, int):
+            item = slice(item, item + 1)
+        start, end = item.start, item.stop
+
+        if start is None and end is None:
+            return self
+
+        return self.get_score_between(start, end)
+
+
+    def add_note(self, pitch, time, duration, velocity , track_index, bar_index):
+        """Add a note to the score
+
+        Parameters
+        ----------
+        pitch :
+            int, pitch of the note
+        velocity :
+            int, velocity of the note
+        duration :
+            int, duration of the note
+        track_index :
+            int, index of the track
+        bar_index :
+            int, index of the bar
+        time :
+            int, time of the note
+
+        Returns
+        -------
+
+        """
+        score = self
+        track_key = score.track_keys[track_index]
+        score.tracks[track_key][bar_index]["time"] = np.append(score.tracks[track_key][bar_index]["time"], time)
+        score.tracks[track_key][bar_index]["pitch"] = np.append(score.tracks[track_key][bar_index]["pitch"], pitch)
+        score.tracks[track_key][bar_index]["duration"] = np.append(score.tracks[track_key][bar_index]["duration"], duration)
+        score.tracks[track_key][bar_index]["velocity"] = np.append(score.tracks[track_key][bar_index]["velocity"], velocity)
+        return score
+
+    def get_tracks(self, item):
+        """
+        Get the tracks between the start and end index
+
+        slice: int or Slice, slice object
+        """
+        if isinstance(item, int):
+            item = slice(item, item + 1)
+        start, end = item.start, item.stop
+
+        if start is None and end is None:
+            return self
+
+        return self.get_track_subset(start, end)
+
 
     def to_base64(self):
         """Transform the score to a base64 string
@@ -130,8 +286,8 @@ class MidiScore:
             new_chords[i][self.TIME_TICK_END_INDEX] -= removed_chord_duration
 
         for track_key in self.track_keys:
-            idx, program, is_drum, voice = track_key
-            new_tracks[(idx, program, is_drum, voice)].pop(bar_index)
+            idx, program, is_drum = track_key
+            new_tracks[(idx, program, is_drum)].pop(bar_index)
 
         return MidiScore(new_chords, new_tracks, self.track_keys, self.tempo, self.tpq)
 
@@ -157,26 +313,26 @@ class MidiScore:
         -------
 
         """
-        self = self.copy()
-        new_chords = deepcopy(self.chords)
-        new_tracks = deepcopy(self.tracks)
+        score = self.copy()
+        new_chords = deepcopy(score.chords)
+        new_tracks = deepcopy(score.tracks)
         new_chords.insert(bar_index + 1, deepcopy(new_chords[bar_index]))
         chord_duration = (
-            new_chords[bar_index][self.TIME_TICK_END_INDEX]
-            - new_chords[bar_index][self.TIME_TICK_START_INDEX]
+            new_chords[bar_index][score.TIME_TICK_END_INDEX]
+            - new_chords[bar_index][score.TIME_TICK_START_INDEX]
         )
         # Offset the start and end time of the chords
         for i in range(bar_index + 1, len(new_chords)):
-            new_chords[i][self.TIME_TICK_START_INDEX] += chord_duration
-            new_chords[i][self.TIME_TICK_END_INDEX] += chord_duration
+            new_chords[i][score.TIME_TICK_START_INDEX] += chord_duration
+            new_chords[i][score.TIME_TICK_END_INDEX] += chord_duration
 
-        for track_key in self.track_keys:
-            idx, program, is_drum, voice = track_key
-            new_tracks[(idx, program, is_drum, voice)].insert(
-                bar_index + 1, self.get_fake_note_vector()
+        for track_key in score.track_keys:
+            idx, program, is_drum = track_key
+            new_tracks[(idx, program, is_drum)].insert(
+                bar_index + 1, score.get_fake_note_vector()
             )
 
-        return MidiScore(new_chords, new_tracks, self.track_keys, self.tempo, self.tpq)
+        return MidiScore(new_chords, new_tracks, score.track_keys, score.tempo, score.tpq)
 
     def notes_to_note_tick_list(self, notes, chords):
         """
@@ -239,10 +395,10 @@ class MidiScore:
                 )
 
         for track_key in self.track_keys:
-            idx, program, is_drum, voice = track_key
+            idx, program, is_drum = track_key
             track = Track(program=program, is_drum=is_drum)
             track.notes = self.track_notes_to_score_notes(
-                self.chords, self.tracks[(idx, program, is_drum, voice)]
+                self.chords, self.tracks[(idx, program, is_drum)]
             )
             score.tracks.append(track)
 
@@ -307,11 +463,11 @@ class MidiScore:
         """
         new_tracks = {}
         for track_key in track_keys:
-            idx, program, is_drum, voice = track_key
-            new_tracks[(idx, program, is_drum, voice)] = deepcopy(
-                tracks[(idx, program, is_drum, voice)]
+            idx, program, is_drum = track_key
+            new_tracks[(idx, program, is_drum)] = deepcopy(
+                tracks[(idx, program, is_drum)]
             )
-            for notes in new_tracks[(idx, program, is_drum, voice)]:
+            for notes in new_tracks[(idx, program, is_drum)]:
                 notes["time"] = (
                     np.asarray(notes["time"].copy(), dtype=np.int32) + offset
                 )
@@ -361,6 +517,9 @@ class MidiScore:
         """
 
         new_chords = deepcopy(self.chords[start_bar:end_bar])
+        if start_bar is None:
+            start_bar = 0
+
         # If start bar > 0 we need to adjust the bar start and end time
         start_bar_tick = self.chords[start_bar][self.TIME_TICK_START_INDEX]
         if start_bar > 0:
@@ -372,11 +531,11 @@ class MidiScore:
         ), f"Negative time found in chords {new_chords}"
         new_tracks = {}
         for track_key in self.track_keys:
-            idx, program, is_drum, voice = track_key
-            new_tracks[(idx, program, is_drum, voice)] = self.tracks[
-                (idx, program, is_drum, voice)
+            idx, program, is_drum = track_key
+            new_tracks[(idx, program, is_drum)] = self.tracks[
+                (idx, program, is_drum)
             ][start_bar:end_bar]
-            assert len(new_tracks[(idx, program, is_drum, voice)]) == len(
+            assert len(new_tracks[(idx, program, is_drum)]) == len(
                 new_chords
             ), "Track and chord length mismatch"
         return MidiScore(new_chords, new_tracks, self.track_keys, self.tempo, self.tpq)
@@ -488,10 +647,10 @@ class MidiScore:
         """
         mask = np.zeros((len(self.track_keys), len(self.chords)))
         for i, track_key in enumerate(self.track_keys):
-            idx, program, is_drum, voice = track_key
+            idx, program, is_drum = track_key
             for j, chord in enumerate(self.chords):
                 mask[i, j] = (
-                    self.tracks[(idx, program, is_drum, voice)][j]["pitch"].shape[0]
+                    self.tracks[(idx, program, is_drum)][j]["pitch"].shape[0]
                     == 0
                 )
         return mask
@@ -565,7 +724,7 @@ class MidiScore:
         self.write(midi_file)
         return prompt_file, output_file, midi_file, output_midi_file
 
-    def _remove_temp_midi_files(
+    def remove_temp_midi_files(
         self, prompt_file, output_file, midi_file, output_midi_file
     ):
         """
@@ -590,174 +749,37 @@ class MidiScore:
         os.remove(midi_file)
         os.remove(output_midi_file)
 
-    @classmethod
-    def get_env(cls):
-        """ """
-        url = os.getenv(API_URL_VARIABLE)
-        key = os.getenv(API_KEY_VARIABLE)
-        return url, key
 
-    def _call_predict_api(
-        self, midi_base64, mask, model, temperature, **prediction_kwargs
-    ):
-        """
-
-        Parameters
-        ----------
-        midi_base64 :
-            
-        mask :
-            
-        model :
-            
-        temperature :
-            
-        **prediction_kwargs :
-            
-
-        Returns
-        -------
-
-        """
-        api_url, api_key = self.get_env()
-        url = os.path.join(api_url, "predict_long")
-        payload = {
-            "model": model,
-            "temperature": temperature,
-            "mask": mask.tolist(),
-            "file": midi_base64,
-        }
-        payload.update(prediction_kwargs)
-        headers = {"x-api-key": api_key}
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        return response.json()["task_id"]
-
-    def _predict_with_api(
-        self,
-        mask,
-        model="large",
-        temperature=0.95,
-        async_mode=False,
-        polling_interval=1,
-        **prediction_kwargs,
-    ):
-        """
-
-        Parameters
-        ----------
-        mask :
-            
-        model :
-             (Default value = "large")
-        temperature :
-             (Default value = 0.95)
-        async_mode :
-             (Default value = False)
-        polling_interval :
-             (Default value = 1)
-        **prediction_kwargs :
-            
-
-        Returns
-        -------
-
-        """
-        mask = np.asarray(mask)
-        self.check_mask(mask)
-        task_id = self._call_predict_api(
-            self.to_base64(), mask, model, temperature, **prediction_kwargs
-        )
-        if async_mode:
-            return task_id
-        else:
-            score = self.from_task_id(task_id, polling_interval=polling_interval)
-        return score
-
-    def _predict_with_predictor(
-        self,
-        predictor,
-        mask,
-        model="large",
-        timeout=3000,
-        temperature=0.95,
-        **prediction_kwargs,
-    ):
-        """
-
-        Parameters
-        ----------
-        predictor :
-            
-        mask :
-            
-        model :
-             (Default value = "large")
-        timeout :
-             (Default value = 3000)
-        temperature :
-             (Default value = 0.95)
-        **prediction_kwargs :
-            
-
-        Returns
-        -------
-
-        """
-        mask = np.asarray(mask)
-        self.check_mask(mask)
-        prompt_file, output_file, midi_file, output_midi_file = (
-            self._create_temp_midi_files()
-        )
-        self.write(midi_file)
-        predictor(
-            midi_file,
-            output_midi_file,
-            prompt_file,
-            output_file,
-            mask,
-            chord_range=(0, mask.shape[1]),
-            model=model,
-            timeout=timeout,
-            temperature=temperature,
-            **prediction_kwargs,
-        )
-        score = MidiScore.from_midi(output_midi_file)
-        # Clean up the files
-        self._remove_temp_midi_files(
-            prompt_file, output_file, midi_file, output_midi_file
-        )
-        return score
 
     def check_times(self):
         """ """
         for track_key in self.track_keys:
-            idx, program, is_drum, voice = track_key
-            assert len(self.tracks[(idx, program, is_drum, voice)]) == len(
+            idx, program, is_drum = track_key
+            assert len(self.tracks[(idx, program, is_drum)]) == len(
                 self.chords
             ), "Track and chord length mismatch"
 
-    @classmethod
-    def _do_checks_after_predict(cls, score, score_to_predict, mask):
+    def sanitize_score(self, score_to_compare, mask):
         """Do checks after predicting a score
 
         Parameters
         ----------
         score :
-            param score_to_predict:
+            param score_to_compare:
         mask :
             return:
-        score_to_predict : MidiScore
-            
+        score_to_compare : MidiScore
+
 
         Returns
         -------
 
         """
+        score = self.copy()
         score.check_times()
-        if len(score.track_keys) > len(score_to_predict.track_keys):
+        if len(score.track_keys) > len(score_to_compare.track_keys):
             # If the model added tracks, we need to remove them
-            score = score.get_track_subset(0, len(score_to_predict.track_keys))
+            score = score.get_track_subset(0, len(score_to_compare.track_keys))
 
         if score.nb_bars < mask.shape[1]:
             pass
@@ -781,25 +803,25 @@ class MidiScore:
         self = self.copy()
         new_tracks = {}
         for track_key in self.track_keys:
-            idx, program, is_drum, voice = track_key
-            new_tracks[(idx, program, is_drum, voice)] = deepcopy(
-                self.tracks[(idx, program, is_drum, voice)]
+            idx, program, is_drum = track_key
+            new_tracks[(idx, program, is_drum)] = deepcopy(
+                self.tracks[(idx, program, is_drum)]
             )
             for idx_chord, chord in enumerate(self.chords):
                 chord_start = chord[self.TIME_TICK_START_INDEX]
                 chord_end = chord[self.TIME_TICK_END_INDEX]
                 chord_duration = chord_end - chord_start
                 for idx_note, note in enumerate(
-                    new_tracks[(idx, program, is_drum, voice)][idx_chord]["time"]
+                    new_tracks[(idx, program, is_drum)][idx_chord]["time"]
                 ):
                     if (
                         note
-                        + new_tracks[(idx, program, is_drum, voice)][idx_chord][
+                        + new_tracks[(idx, program, is_drum)][idx_chord][
                             "duration"
                         ][idx_note]
                         > chord_duration
                     ):
-                        new_tracks[(idx, program, is_drum, voice)][idx_chord][
+                        new_tracks[(idx, program, is_drum)][idx_chord][
                             "duration"
                         ][idx_note] = (chord_duration - note)
 
@@ -811,150 +833,13 @@ class MidiScore:
             self.tpq,
         )
 
-    @classmethod
-    def _call_polling_api(cls, url, key, task_id):
-        """
+    def add_instrument(self, instrument):
+        try:
+            program, is_drum = INSTRUMENTS_DICT[instrument]
+        except KeyError:
+            raise ValueError(f"Unknown instrument {instrument}")
 
-        Parameters
-        ----------
-        url :
-            
-        key :
-            
-        task_id :
-            
-
-        Returns
-        -------
-
-        """
-        url = os.path.join(url, "polling_predict", task_id)
-        headers = {"x-api-key": key}
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
-
-    @classmethod
-    def from_task_id(cls, task_id, polling_interval=1, timeout=3000):
-        """Create a score from a task id by calling the API polling endpoint each polling_interval seconds
-        until completion or failure.
-
-        Parameters
-        ----------
-        task_id :
-            str, task identifier you got from the predict call
-        polling_interval :
-            int, interval in seconds to poll the API (Default value = 1)
-        timeout :
-            int, timeout in seconds, raise an error if the task is not completed after this time (Default value = 3000)
-
-        Returns
-        -------
-
-        """
-        url, key = cls.get_env()
-        total_time = 0
-        # Poll the API
-        while True:
-            if total_time > timeout:
-                raise TimeoutError("Timeout reached")
-            result = cls._call_polling_api(url, key, task_id)
-            if result["status"] == "COMPLETED":
-                break
-            elif result["status"] == "FAILED":
-                raise ValueError("Task failed")
-            time.sleep(polling_interval)
-            total_time += polling_interval
-
-        # Download the file
-        score = cls.from_base64(result["result"]["midi"])
-
-        return score
-
-    def predict(
-        self,
-        mask,
-        model="control_masking_large",
-        timeout=3000,
-        temperature=0.95,
-        cut_silenced_bars=False,
-        regen_missing_bars=False,
-        async_mode=False,
-        polling_interval=1,
-        **prediction_kwargs,
-    ):
-        """Predict the score either with the API or with a predictor object
-
-        Parameters
-        ----------
-        mask :
-            np.array of shape (n_tracks, n_chords)
-        predictor :
-            Predictor, function to call the API
-        model :
-            str, model to use (for the API) (Default value = "control_masking_large")
-        timeout :
-            int, timeout for the API (Default value = 3000)
-        temperature :
-            float, temperature for the model (Default value = 0.95)
-        cut_silenced_bars :
-            bool, if True cut silenced bars at the beginning and end (Default value = False)
-        regen_missing_bars :
-            bool, if True regenerate missing bars with another call to predict (Default value = False)
-        prediction_kwargs :
-            dict, additional arguments for the model (for example chord and control tags)
-        async_mode :
-            bool, if True return the task id, otherwise wait for the request to finish with polling (Default value = False)
-        polling_interval :
-            int, interval in seconds to poll the API, only used if async_mode is False (Default value = 1)
-        **prediction_kwargs :
-            
-
-        Returns
-        -------
-        type
-            MidiScore or str : predicted score if sync mode
-
-        """
-
-        score_to_predict = self.copy()
-        mask = np.asarray(mask)
-        score_to_predict.check_mask(mask)
-        result = score_to_predict._predict_with_api(
-            mask,
-            model=model,
-            timeout=timeout,
-            temperature=temperature,
-            async_mode=async_mode,
-            polling_interval=polling_interval,
-            **prediction_kwargs,
-        )
-        if async_mode:
-            return result  # Return the task id
-
-        score = result
-        score = self._do_checks_after_predict(score, score_to_predict, mask)
-        # Cut silenced bars if at the end or beginning
-        if cut_silenced_bars:
-            score = score.cut_silenced_bars_at_beginning_and_end()
-
-        # Regenerate missing bars if necessary
-        if regen_missing_bars and score.nb_bars < mask.shape[1]:
-            nb_missing_bars = mask.shape[1] - score.nb_bars
-            score = score.add_silence_bars(
-                mask.shape[1] - score.nb_bars, add_fake_notes=True
-            )
-            new_mask = score.get_mask()
-            new_mask[:, -nb_missing_bars:] = 1
-            return score.predict(
-                new_mask,
-                model=model,
-                timeout=timeout,
-                temperature=temperature,
-                cut_silenced_bars=cut_silenced_bars,
-                regen_missing_bars=regen_missing_bars,
-            )
-        return score
+        return self.add_track(program, is_drum)
 
     def add_track(self, program, is_drum):
         """Add an empty track (with fake notes) to the score
@@ -971,7 +856,7 @@ class MidiScore:
 
         """
         self = self.copy()
-        new_track_key = (len(self.track_keys), program, bool(is_drum), 0)
+        new_track_key = (len(self.track_keys), program, bool(is_drum))
         self.track_keys.append(new_track_key)
         self.tracks[new_track_key] = [
             self.get_fake_note_vector() for _ in range(len(self.chords))
@@ -1045,7 +930,6 @@ class MidiScore:
             track_key[0],
             INSTRUMENTS_DICT[instrument][0],
             bool(INSTRUMENTS_DICT[instrument][1]),
-            track_key[3],
         )
         score.track_keys[track_idx] = new_track_index
         # Change in tracks
@@ -1088,10 +972,10 @@ class MidiScore:
         new_chords = score.chords + new_other_score.chords
         new_tracks = {}
         for track_key in score.track_keys:
-            idx, program, is_drum, voice = track_key
-            new_tracks[(idx, program, is_drum, voice)] = (
-                score.tracks[(idx, program, is_drum, voice)]
-                + new_other_score.tracks[(idx, program, is_drum, voice)]
+            idx, program, is_drum = track_key
+            new_tracks[(idx, program, is_drum)] = (
+                score.tracks[(idx, program, is_drum)]
+                + new_other_score.tracks[(idx, program, is_drum)]
             )
         return MidiScore(
             new_chords, new_tracks, score.track_keys, score.tempo, score.tpq
@@ -1137,17 +1021,17 @@ class MidiScore:
 
         new_tracks = {}
         for track_key in score.track_keys:
-            idx, program, is_drum, voice = track_key
-            new_tracks[(idx, program, is_drum, voice)] = score.tracks[
-                (idx, program, is_drum, voice)
+            idx, program, is_drum = track_key
+            new_tracks[(idx, program, is_drum)] = score.tracks[
+                (idx, program, is_drum)
             ]
             for new_chord in new_chords[-n_bars:]:
                 if add_fake_notes:
-                    new_tracks[(idx, program, is_drum, voice)].append(
+                    new_tracks[(idx, program, is_drum)].append(
                         self.get_fake_note_vector()
                     )
                 else:
-                    new_tracks[(idx, program, is_drum, voice)].append(
+                    new_tracks[(idx, program, is_drum)].append(
                         {
                             "time": np.asarray([], dtype=np.int32),
                             "pitch": np.asarray([], dtype=np.int8),
@@ -1156,7 +1040,7 @@ class MidiScore:
                         }
                     )
             # Assert good length
-            assert len(new_tracks[(idx, program, is_drum, voice)]) == len(
+            assert len(new_tracks[(idx, program, is_drum)]) == len(
                 new_chords
             ), "Track and chord length mismatch"
         return MidiScore(
@@ -1188,7 +1072,7 @@ class MidiScore:
         """
         bar_duration_quarters = 4 * ts[0] / ts[1]
         track_keys = [
-            (idx, INSTRUMENTS_DICT[ins][0], INSTRUMENTS_DICT[ins][1] == 1, 0)
+            (idx, INSTRUMENTS_DICT[ins][0], INSTRUMENTS_DICT[ins][1] == 1)
             for idx, ins in enumerate(instruments)
         ]
         chords = [
