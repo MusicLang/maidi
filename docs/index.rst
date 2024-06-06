@@ -30,6 +30,12 @@ Welcome to M(AI)di's documentation.
 
    ./usage/module_reference.rst
 
+.. toctree::
+    :maxdepth: 1
+    :caption: Examples:
+
+    ./auto_examples/index.rst
+
 
 
 See the :ref:`examples-gallery`.

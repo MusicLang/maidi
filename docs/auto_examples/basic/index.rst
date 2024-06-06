@@ -3,7 +3,7 @@
 .. _sphx_glr_auto_examples_basic:
 
 Basic midi manipulation
-=======================
+-------------------------------
 
 This is a simple example of how to manipulate midi files using this library.
 
