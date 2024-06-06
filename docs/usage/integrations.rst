@@ -1,6 +1,5 @@
 .. _integrations:
 
-
 Integrations
 ============
 
@@ -10,9 +9,8 @@ We also gladly accept contributions to add more integrations.
 With MusicLang API
 ------------------
 
-MusicLang is a co-pilot for music composition. It is a music AI model that can modify a midi score based on a prompt.
+MusicLang is a co-pilot for music composition (see https://www.musiclang.io). It is a music AI model that can modify a midi score based on a prompt.
 The API is integrated into M(AI)DI to provide a seamless experience for the user.
-
 
 **A simple example: Generate a 4 bar score** with the musiclang masking model API.
 Just set your API_URL and API_KEY in the environment (or get one [here](www.musiclang.io)) and run the following code ::
@@ -110,7 +108,7 @@ Just set your API_URL and API_KEY in the environment (or get one [here](www.musi
     predicted_score.write("predicted_score.mid")
 
 
-For more details on the API, please refer to the [MusicLang API documentation](https://api.musiclang.io/documentation).
+For more details on the API, please refer to the `MusicLang API documentation <https://api.musiclang.io/documentation>`_ .
 
 
 With other tools and APIs

@@ -17,6 +17,11 @@ Welcome to M(AI)di's documentation.
 
    ./usage/about.rst
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Integrations:
+
+   ./usage/integrations.rst
 
 
 .. toctree::
