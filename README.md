@@ -14,7 +14,7 @@ Here is where M(ai)di shines:
 
 - **Midi Files Manipulation**: Load, save, edit, merge and analyze midi files with ease.
 - **Music AI Models Integration**: Integrate with the best music AI models and APIs to generate music.
-- **Automatic tagging**: Get the chords, tempo, time signature, and many other musical features for each bar/instrument of the midi file.
+- **Automatic MIDI tagging**: Get the chords, tempo, time signature, and many other musical features for each bar/instrument of the midi file.
 
 **Disclaimer** : We really focus on processing midi files and model inference calls. We don't focus on audio features neither model training, neither tokenization.
 
