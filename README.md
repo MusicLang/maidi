@@ -16,7 +16,7 @@ Here is where M(ai)di shines:
 - **Music AI Models Integration**: Integrate with the best music AI models and APIs to generate music.
 - **Automatic MIDI tagging**: Get the chords, tempo, time signature, and many other musical features for each bar/instrument of the midi file.
 
-**Disclaimer** : We really focus on processing midi files and model inference calls. We don't focus on audio features neither model training, neither tokenization.
+*Disclaimer : We really focus on processing midi files and model inference calls. We don't focus on audio features neither model training, neither tokenization.*
 
 Getting Started
 ===============
