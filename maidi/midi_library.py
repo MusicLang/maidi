@@ -3,7 +3,7 @@ import glob
 
 # Get absolute parent dir of this file
 
-absolute_parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+absolute_parent_dir = os.path.dirname(os.path.abspath(__file__))
 midi_test_dir = os.path.join(absolute_parent_dir, "examples/*.mid")
 
 # List all midi examples files

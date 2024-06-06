@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:00.000** total execution time for 3 files **from auto_examples**:
+**00:00.000** total execution time for 0 files **from auto_examples**:
 
 .. container::
 
@@ -32,12 +32,6 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_01_add_guitar_track.py` (``01_add_guitar_track.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_02_tag_score.py` (``02_tag_score.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_03_predict_from_scratch.py` (``03_predict_from_scratch.py``)
-     - 00:00.000
-     - 0.0
+   * - N/A
+     - N/A
+     - N/A
