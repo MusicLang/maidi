@@ -14,16 +14,53 @@ Examples gallery
 
 .. thumbnail-parent-div-open
 
+.. thumbnail-parent-div-close
+
+.. raw:: html
+
+    </div>
+
+Basic midi manipulation
+=======================
+
+This is a simple example of how to manipulate midi files using this library.
+
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+.. thumbnail-parent-div-open
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="In this example : - We will concatenate two midi files horizontally - Then vertically">
+
+.. only:: html
+
+  .. image:: /auto_examples/basic/images/thumb/sphx_glr_02_concatenate_two_midis_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_basic_02_concatenate_two_midis.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Concatenate two midis</div>
+    </div>
+
+
 .. raw:: html
 
     <div class="sphx-glr-thumbcontainer" tooltip="In this example : - We load an existing score from the example library - We tag each bar of the...">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_02_tag_score_thumb.png
+  .. image:: /auto_examples/basic/images/thumb/sphx_glr_01_tag_score_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_02_tag_score.py`
+  :ref:`sphx_glr_auto_examples_basic_01_tag_score.py`
 
 .. raw:: html
 
@@ -31,20 +68,42 @@ Examples gallery
     </div>
 
 
+.. thumbnail-parent-div-close
+
+.. raw:: html
+
+    </div>
+
+Integration with MusicLang API
+===============================
+
+This is a simple example of how to integrate the MusicLang API into your application.
+You'll need to have an API_KEY (here)[www.musiclang.io] and set your environment variable to use it.
+
+
+
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+.. thumbnail-parent-div-open
+
 .. raw:: html
 
     <div class="sphx-glr-thumbcontainer" tooltip="In this example : - We load a 4 bar template from a midi file - We add a clean guitar track - W...">
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_01_add_guitar_track_thumb.png
+  .. image:: /auto_examples/musiclang_api/images/thumb/sphx_glr_01_add_guitar_track_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_01_add_guitar_track.py`
+  :ref:`sphx_glr_auto_examples_musiclang_api_01_add_guitar_track.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Generate a new track on a midi file with MusicLangAPI</div>
+      <div class="sphx-glr-thumbnail-title">Generate a new track on a midi file</div>
     </div>
 
 
@@ -54,14 +113,31 @@ Examples gallery
 
 .. only:: html
 
-  .. image:: /auto_examples/images/thumb/sphx_glr_03_predict_from_scratch_thumb.png
+  .. image:: /auto_examples/musiclang_api/images/thumb/sphx_glr_02_generate_from_scratch_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_examples_03_predict_from_scratch.py`
+  :ref:`sphx_glr_auto_examples_musiclang_api_02_generate_from_scratch.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Create a 4 bars drum'n'bass song with MusicLangAPI</div>
+      <div class="sphx-glr-thumbnail-title">Create a drum'n'bass sample</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="In this example : - We do the same example that 02_generate_from_scratch.py but in async mode -...">
+
+.. only:: html
+
+  .. image:: /auto_examples/musiclang_api/images/thumb/sphx_glr_03_generate_async_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_musiclang_api_03_generate_async.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Create a song in async mode</div>
     </div>
 
 
@@ -74,10 +150,11 @@ Examples gallery
 
 .. toctree::
    :hidden:
+   :includehidden:
 
-   /auto_examples/02_tag_score
-   /auto_examples/01_add_guitar_track
-   /auto_examples/03_predict_from_scratch
+
+   /auto_examples/basic/index.rst
+   /auto_examples/musiclang_api/index.rst
 
 
 .. only:: html

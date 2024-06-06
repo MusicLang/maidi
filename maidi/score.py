@@ -12,7 +12,33 @@ from maidi.constants import INSTRUMENTS_DICT, API_URL_VARIABLE, API_KEY_VARIABLE
 
 class MidiScore:
     """
-    The main object to handle midi scores
+    The main object to handle midi scores. It allows to manipulate midi scores in a numpy-like way by splitting it
+    into two dimensions : tracks and bars.
+
+    **Usage**
+
+    Load a midi file and write it to a new file
+
+    >>> from maidi import MidiScore
+    >>> score = MidiScore.from_midi("path/to/midi.mid")
+    >>> score.write("path/to/output.mid")
+
+    Add a track and assign the content of the track to be the same as the first track
+
+    >>> from maidi import MidiScore
+    >>> from maidi import instrument
+    >>> score = MidiScore.from_midi("path/to/midi.mid")
+    >>> score = score.add_instrument(instrument.ACOUSTIC_GUITAR)
+    >>> score[-1, :] = score[0, :]
+
+    Concatenate two scores horizontally
+
+    >>> from maidi import MidiScore
+    >>> score1 = MidiScore.from_midi("path/to/midi1.mid")
+    >>> score2 = MidiScore.from_midi("path/to/midi2.mid")
+    >>> score = score1.concatenate(score2, axis=1)
+
+
     """
 
     SCALE_DEGREE_INDEX = 0
@@ -29,6 +55,28 @@ class MidiScore:
     FAKE_NOTE_PITCH = 60
 
     def __init__(self, bars, tracks, track_keys, tempo, tpq=24, **kwargs):
+        """
+        Create a new MidiScore object, you usually never directly call the constructor.
+        See :meth:`~MidiScore.from_midi()` or :meth:`~MidiScore.from_base64()` to create a new MidiScore object
+
+
+        Parameters
+        ----------
+
+        bars : list of list
+            List of bars in the score
+        tracks : dict
+            Dictionary of tracks in the score
+        track_keys : list
+            List of track keys
+        tempo : int
+            Tempo of the score
+        tpq : int
+            Ticks per quarter note
+        kwargs : dict
+            Additional arguments
+
+        """
         self.bars = bars
         self.tracks = tracks
         self.track_keys = track_keys

@@ -1,12 +1,12 @@
-.. _score:
+.. _musiclang-api:
 
-MidiScore object
+MusicLang API
 =======================
 
-.. currentmodule:: maidi
+.. currentmodule:: maidi.integrations.api
 
 
-.. autoclass:: MidiScore
+.. autoclass:: MusicLangAPI
     :members:
     :undoc-members:
     :inherited-members:

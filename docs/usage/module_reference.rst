@@ -1,6 +1,22 @@
-M(AI)di's references
-=======================
+Code documentation
+======================
+
+Base
+----
 
 
-:ref:`score`.
 
+:ref:`score`
+
+
+
+API Integrations
+-----------------
+
+:ref:`musiclang-api`
+
+
+Open source integrations
+-------------------------
+
+Soon

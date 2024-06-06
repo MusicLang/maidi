@@ -1,19 +1,19 @@
 """
-Create a 4 bars song with MusicLangAPI in async mode
-======================================================
+Create a drum'n'bass sample
+==================================================
 
 In this example :
-- We do the same example that 03_predict_from_scratch.py but in async mode
-- We poll the API until the prediction is done every 3 seconds
+- We create an empty score with 4 bars and drums and bass instruments
+- We set the mask to regenerate everything
+- We call the musiclang API to generate the score
+- We save the predicted score to a midi file
 
 """
 
-import os
-import time
 from maidi import MidiScore
 from maidi import instrument
 from maidi.integrations.api import MusicLangAPI
-
+import os
 
 # Assuming API_URL and API_KEY are set in the environment
 API_URL = os.getenv("API_URL")
@@ -35,19 +35,7 @@ mask[:, :] = 1  # Regenerate everything in the score
 
 # Call the musiclang API to predict the score
 api = MusicLangAPI(API_URL, API_KEY, verbose=True)
-task_id = api.predict(score,
-                              mask,
-                              tags=tags,
-                              chords=chords,
-                              async_mode=True, # Set to True to use async mode
-
-                              polling_interval=3
+predicted_score = api.predict(score,
+    mask, tags=tags, chords=chords, async_mode=False, polling_interval=3
 )
-
-# Poll the API until the prediction is done
-while True:
-    score = api.poll_api(task_id)
-    if score is not None:
-        score.write('predicted_score.mid')
-        break
-    time.sleep(3)
+predicted_score.write("predicted_score.mid")

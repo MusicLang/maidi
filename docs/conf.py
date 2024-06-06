@@ -80,6 +80,34 @@ autosummary_generate = True
 numpydoc_show_class_members = False  # If you don't want to show class members by default
 numpydoc_class_members_toctree = False  # If you don't want to create separate toctrees for class members
 
+def skip_undocumented_members(app, what, name, obj, skip, options):
+    # Skip members that have no docstring
+    if not obj.__doc__:
+        return True
+    return skip
+
+
+
+# Autodoc settings
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'inherited-members': True,
+    'show-inheritance': False,
+    'special-members': '__init__',  # include __init__ method
+    'exclude-members': '__weakref__'
+}
+# Add napoleon settings if you use numpy or google style docstrings
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+
+
+
 def setup(app):
     app.add_css_file('css/custom_css.css')
     app.add_directive('autoautosummary', AutoAutoSummary)
+    app.connect('autodoc-skip-member', skip_undocumented_members)
+    # If you are using recommonmark for Markdown
+    app.add_config_value('recommonmark_config', {
+        'auto_toc_tree_section': 'Contents',
+    }, True)

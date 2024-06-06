@@ -24,8 +24,5 @@ tagger = ScoreTagger(
 
 tags = tagger.tag_score(score)
 chords = score.get_chords_prompt()
-# Generate a song from scratch with these tags
-mask = score.get_mask()
-mask[:, :] = 1  # Regenerate everything in the score
-
 print(tags)
+print(chords)

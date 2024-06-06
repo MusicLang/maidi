@@ -13,16 +13,21 @@ from maidi import MidiScore
 
 class MusicLangAPI(MidiApiIntegration):
     """
-    Class to interact with the MusicLang API
+    Class to interact with the MusicLang API from a maidi.MidiScore
 
-    Usage:
-    ```python
-    import os
-    API_URL = os.getenv("API_URL")
-    API_KEY = os.getenv("API_KEY")
+    **Usage:**
 
-    from maidi.integrations import MusicLangAPI
-    api = MusicLangAPI(API_URL, API_KEY)
+
+    >>> import os
+    >>> API_URL = os.getenv("API_URL")
+    >>> API_KEY = os.getenv("API_KEY")
+    >>> from maidi.integrations.api import MusicLangAPI
+    >>> from maidi import MidiScore,instrument
+    >>> api = MusicLangAPI(API_URL, API_KEY)
+    >>> score = MidiScore.from_empty(instruments=[instrument.PIANO, instrument.ELECTRIC_BASS_FINGER], nb_bars=4, ts=(4, 4), tempo=120)
+    >>> mask = np.ones((2, 4))
+    >>> predicted_score = api.predict(score, mask, model="control_masking_large", timeout=120, temperature=0.95)
+    >>> predicted_score.write("predicted_score.mid")
 
 
     """
@@ -31,6 +36,19 @@ class MusicLangAPI(MidiApiIntegration):
 
 
     def __init__(self, api_url, api_key, verbose=False):
+        """
+        Initialize the MusicLangAPI class
+
+        Parameters
+        ----------
+        api_url : str
+            URL of the API
+        api_key : str
+            Your secret API key to use
+        verbose : bool
+            If True, print debug information (Default value = False)
+
+        """
         super().__init__()
         self.api_url = api_url
         self.api_key = api_key
@@ -55,7 +73,17 @@ class MusicLangAPI(MidiApiIntegration):
             polling_interval=1,
             **prediction_kwargs,
     ):
-        """Predict the score either with the API or with a predictor object
+        """Predict the score with the given mask and prediction parameters
+
+        **Usage**
+
+        >>> from maidi import MidiScore
+        >>> from maidi.integrations.api import MusicLangAPI
+        >>> score = MidiScore.from_empty(instruments=['piano'], nb_bars=4, ts=(4, 4), tempo=120)
+        >>> mask = np.ones((1, 4))
+        >>> api = MusicLangAPI(API_URL, API_KEY)  # Get your API_URL and API_KEY here
+        >>> predicted_score = api.predict(score, mask, model="control_masking_large", timeout=120, temperature=0.95)
+        >>> predicted_score.write("predicted_score.mid")
 
         Parameters
         ----------
@@ -74,7 +102,7 @@ class MusicLangAPI(MidiApiIntegration):
         regen_missing_bars :
             bool, if True regenerate missing bars with another call to predict (Default value = False)
         prediction_kwargs :
-            dict, additional arguments for the model (for example chord and control tags)
+            dict, additional arguments for the model (specifically `chord` and control `tags`)
         async_mode :
             bool, if True return the task id, otherwise wait for the request to finish with polling (Default value = False)
         polling_interval :
@@ -161,6 +189,17 @@ class MusicLangAPI(MidiApiIntegration):
         """Create a score from a task id by calling the API polling endpoint each polling_interval seconds
         until completion or failure.
 
+        **Usage**
+
+        >>> from maidi import MidiScore
+        >>> from maidi.integrations.api import MusicLangAPI
+        >>> import time
+        >>> score = MidiScore.from_empty(instruments=['piano'], nb_bars=4, ts=(4, 4), tempo=120)
+        >>> mask = np.ones((1, 4))
+        >>> api = MusicLangAPI(API_URL, API_KEY)
+        >>> task_id = api.predict(score, mask, async_mode=True)
+        >>> score = api.from_task_id(task_id, polling_interval=3) # Wait for the task to complete by polling the API every 3 seconds
+
         Parameters
         ----------
         task_id :
@@ -197,6 +236,7 @@ class MusicLangAPI(MidiApiIntegration):
 
     def poll_api(self, task_id):
         """Poll the API with a task id once
+
         Parameters
         ----------
         task_id :
@@ -313,6 +353,8 @@ class MusicLangAPI(MidiApiIntegration):
     ):
         """
 
+        Not implemented yet.
+
         Parameters
         ----------
         predictor :
@@ -352,7 +394,7 @@ class MusicLangAPI(MidiApiIntegration):
         )
         score = MidiScore.from_midi(output_midi_file)
         # Clean up the files
-        self.remove_temp_midi_files(
+        self._remove_temp_midi_files(
             prompt_file, output_file, midi_file, output_midi_file
         )
         return score
@@ -366,7 +408,7 @@ class MusicLangAPI(MidiApiIntegration):
         score.write(midi_file)
         return prompt_file, output_file, midi_file, output_midi_file
 
-    def remove_temp_midi_files(
+    def _remove_temp_midi_files(
             self, prompt_file, output_file, midi_file, output_midi_file
     ):
         """

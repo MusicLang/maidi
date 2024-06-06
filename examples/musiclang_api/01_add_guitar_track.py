@@ -1,5 +1,5 @@
 """
-Generate a new track on a midi file with MusicLangAPI
+Generate a new track on a midi file
 ======================================================
 
 In this example :

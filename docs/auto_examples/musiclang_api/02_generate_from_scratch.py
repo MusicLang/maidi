@@ -1,5 +1,5 @@
 """
-Create a 4 bars drum'n'bass song with MusicLangAPI
+Create a drum'n'bass sample
 ==================================================
 
 In this example :

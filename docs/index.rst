@@ -6,40 +6,24 @@
 Welcome to M(AI)di's documentation.
 =====================================
 
-
-Indices and tables
-====================
+.. image:: ../assets/logo2.png
+  :width: 400
+  :alt: Maidi logo
 
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Package:
 
    ./usage/about.rst
 
 
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
-
-   ./usage/installation.rst
 
 .. toctree::
-   :maxdepth: 3
-
-   ./usage/user_guide_index.rst
-
-
-.. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
+   :caption: Code Reference:
 
    ./usage/module_reference.rst
-
-
-.. toctree::
-   :maxdepth: 3
-
-   ./usage/score.rst
 
 
 

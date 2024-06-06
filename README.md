@@ -10,13 +10,13 @@ It came from the realization that artists need to manipulate MIDI and not only a
 So here we are, providing a simple and efficient way to manipulate midi files and integrate with music AI models.
 In a few lines of code you will be able to parse, analyze and generate midi files with the best music AI models available.
 
-Here is where M(ai)di shines:
+**Here is where M(ai)di shines:**
 
 - **Midi Files Manipulation**: Load, save, edit, merge and analyze midi files with ease.
 - **Music AI Models Integration**: Integrate with the best music AI models and APIs to generate music.
 - **Automatic MIDI tagging**: Get the chords, tempo, time signature, and many other musical features for each bar/instrument of the midi file.
 
-*Disclaimer : We really focus on processing midi files and model inference calls. We don't focus on audio features neither model training, neither tokenization.*
+*Disclaimer : We really focus on processing midi files and model inference calls. We don't implement audio features, neither model training, neither tokenization.*
 
 Getting Started
 ===============
@@ -42,22 +42,10 @@ Usage
 A simple code snippet to load and analyze a midi file : 
 
 ```python
-from maidi import MidiScore, ScoreTagger
+from maidi import MidiScore, ScoreTagger, midi_library
 from maidi.analysis import tags_providers
 
-# Load a midi file
-score = MidiScore('path/to/midi/file.mid')
-
-# Get a score with the first track and the first 4 bars of the midi file
-score = score[0, :4]
-
-# Get the chord progression of the score
-chords = score.get_chords_prompt()
-print('Chords : ')
-print(chords)
-
-# Get the tags of the scores
-filepath = "examples/example1.mid"
+score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
 
 tagger = ScoreTagger(
     [
@@ -69,9 +57,9 @@ tagger = ScoreTagger(
 )
 
 tags = tagger.tag_score(score)
-
-print('Tags for the score : ')
+chords = score.get_chords_prompt()
 print(tags)
+print(chords)
 ```
 
 
@@ -194,11 +182,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 Contributing
 ============
 
-We welcome contributions to the project as long as it fits the main philosophy of the project : 
+We welcome contributions to the project as long as it fits its main philosophy :
 
-- Manipulate midi files
-- Integrate with (symbolic) music AI models (inference only)
-- Provide a simple and efficient API
+- Manipulate midi files in some ways
+- Integrate with music AI models (inference & symbolic only)
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
