@@ -1,14 +1,22 @@
+"""
+Tag each bar of a score with musical informations
+==================================================
+
+In this example :
+- We load an existing score from the example library
+- We tag each bar of the score with musical informations
+- We print the tags
+"""
+
 import os
 
-from maidi import MidiScore, ScoreTagger
+from maidi import MidiScore, ScoreTagger, midi_library
 from maidi.analysis import tags_providers
 from maidi.integrations.api import MusicLangAPI
 
 filepath = "examples/example1.mid"
 
-score = MidiScore.from_midi(
-    filepath, chord_range=(0, 16)
-)  # Load first 8 bars of a midi file
+score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
 
 tagger = ScoreTagger(
     [
@@ -25,14 +33,4 @@ chords = score.get_chords_prompt()
 mask, _, _ = score.get_empty_controls(prevent_silence=True)
 mask[:, :] = 1  # Regenerate everything in the score
 
-# Call the musiclang API to predict the score
-# Assuming API_URL and API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
-API_KEY = os.getenv("API_KEY")
-
-api = MusicLangAPI(API_URL, API_KEY, verbose=True)
-predicted_score = api.predict(score,
-    mask, tags=tags, chords=chords, async_mode=False, polling_interval=5,
-                              temperature=0.9
-)
-predicted_score.write("predicted_score.mid")
+print(tags)

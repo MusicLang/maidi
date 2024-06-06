@@ -442,19 +442,18 @@ def fast_chord_inference(tracks, chord_durations):
 
     Parameters
     ----------
-    notes :
+
+    tracks : dict
+        Dictionary of tracks
         
-    bars :
-        
-    tracks :
-        
-    chord_durations :
-        
+    chord_durations : list
+        List of tuples (num, den) with the duration of each chord in quarters
 
     Returns
     -------
+    list
+        List of tuples (roman, tonality_root, tonality_mode, chord_octave, extension, time signature num, time signature den) with the chord progression
 
-    
     """
 
     nb_bars = get_nb_bars(tracks)

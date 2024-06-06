@@ -1,4 +1,4 @@
-![M(AI)DI](assets/logo2.webp)
+![M(AI)DI](assets/logo2.png)
 
 M(AI)DI
 =======
@@ -85,7 +85,6 @@ MusicLang is a co-pilot for music composition. It is a music AI model that can m
 The API is integrated into M(AI)DI to provide a seamless experience for the user.
 
 
-
 **A simple example: Generate a 4 bar score** with the musiclang masking model API.
 Just set your API_URL and API_KEY in the environment (or get one [here](www.musiclang.io)) and run the following code :
 
@@ -146,6 +145,44 @@ predicted_score = api.predict(score,
 )
 predicted_score.write("predicted_score.mid")
 ```
+
+**Generate a track that has the same characteristics as an existing midi files** : Start from a midi file and generate a new track with the same characteristics.
+
+```python
+import os
+from maidi import MidiScore, ScoreTagger, midi_library
+from maidi.analysis import tags_providers
+from maidi.integrations.api import MusicLangAPI
+
+# Assuming API_URL and API_KEY are set in the environment
+API_URL = os.getenv("API_URL")
+API_KEY = os.getenv("API_KEY")
+# Load a midi file
+score = MidiScore.from_midi(midi_library.get_midi_file('example1'))
+
+# Get a score with the first track and the first 4 bars of the midi file
+score = score[0, :4]
+
+tagger = ScoreTagger(
+    [
+        tags_providers.DensityTagsProvider(),
+        tags_providers.MinMaxPolyphonyTagsProvider(),
+        tags_providers.MinMaxRegisterTagsProvider(),
+        tags_providers.SpecialNotesTagsProvider(),
+    ]
+)
+tags = tagger.tag_score(score)
+chords = score.get_chords_prompt()
+mask = score.get_mask()
+mask[:, :] = 1  # Regenerate everything in the score
+
+api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+predicted_score = api.predict(score,
+    mask, async_mode=False, polling_interval=3
+)
+predicted_score.write("predicted_score.mid")
+```
+
 
 With other tools and APIs
 -------------------------

@@ -11,7 +11,9 @@ from maidi.constants import INSTRUMENTS_DICT, API_URL_VARIABLE, API_KEY_VARIABLE
 
 
 class MidiScore:
-    """ """
+    """
+    The main object to handle midi scores
+    """
 
     SCALE_DEGREE_INDEX = 0
     TONALITY_INDEX = 1
@@ -26,8 +28,8 @@ class MidiScore:
     FAKE_NOTE_DURATION = 2
     FAKE_NOTE_PITCH = 60
 
-    def __init__(self, chords, tracks, track_keys, tempo, tpq=24, **kwargs):
-        self.chords = chords
+    def __init__(self, bars, tracks, track_keys, tempo, tpq=24, **kwargs):
+        self.bars = bars
         self.tracks = tracks
         self.track_keys = track_keys
         self.tempo = tempo
@@ -35,7 +37,7 @@ class MidiScore:
         self.kwargs = kwargs
 
     @classmethod
-    def from_midi(cls, midi_file, tpq=24, chord_range=None):
+    def from_midi(cls, midi_file, tpq=24, bar_range=None):
         """
 
         Parameters
@@ -44,7 +46,7 @@ class MidiScore:
             
         tpq :
              (Default value = 24)
-        chord_range :
+        bar_range :
              (Default value = None)
 
         Returns
@@ -54,19 +56,23 @@ class MidiScore:
         from maidi.parser import Parser
 
         parser = Parser(tpq=tpq)
-        chords, tracks, track_keys, tempo = parser.parse(midi_file)
-        score = cls(chords, tracks, track_keys, tempo, tpq=tpq)
-        if chord_range is not None:
-            score = score.get_score_between(*chord_range)
+        bars, tracks, track_keys, tempo = parser.parse(midi_file)
+        score = cls(bars, tracks, track_keys, tempo, tpq=tpq)
+        if bar_range is not None:
+            score = score.get_score_between(*bar_range)
         return score
 
     @property
     def shape(self):
-        """ """
-        return len(self.track_keys), len(self.chords)
+        """
+        Return the shape of the score (n_tracks, n_bars)
+        """
+        return len(self.track_keys), len(self.bars)
     @property
     def nb_tracks(self):
-        """ """
+        """
+        Number of tracks (or instruments) in the score
+        """
         return len(self.track_keys)
 
     @classmethod
@@ -92,6 +98,25 @@ class MidiScore:
 
 
     def __getitem__(self, item):
+        """
+        Get the subscore corresponding to the items like the score was a matrix.
+        Query in the numpy style
+        The only difference is that all query will output an object of the same number of dimensions as the original object (A score)
+
+
+        Parameters
+        ----------
+
+        item : int, slice or tuple
+            The index or slice of the score to get
+            If a tuple is provided, the first element is the track index and the second element is the bar index
+
+        Returns
+        -------
+        score: MidiScore
+            The subscore corresponding to the query
+
+        """
         score = self
         if isinstance(item, tuple):
             first_dim, second_dim = item
@@ -102,6 +127,23 @@ class MidiScore:
             return score.get_tracks(item)
 
     def __setitem__(self, item, value):
+        """
+        Set the subscore corresponding to the items like the score was a matrix.
+        Set in the numpy style
+        The only difference is that all query will output an object of the same number of dimensions as the original object (A score)
+
+        Parameters
+        ----------
+        item : int, slice or tuple
+            The index or slice of the score to get
+            If a tuple is provided, the first element is the track index and the second element is the bar index
+        value : MidiScore
+            The subscore to set, should have the same shape as the query
+
+        Returns
+        -------
+        None
+        """
         if not isinstance(value, MidiScore):
             raise TypeError("Value must be a MidiScore instance")
 
@@ -112,7 +154,7 @@ class MidiScore:
             # Ensure the value has the same structure
             if len(value.shape[0]) != 1:
                 raise ValueError("The provided MidiScore must have one track")
-            if len(value.shape[1]) != len(self.chords):
+            if len(value.shape[1]) != len(self.bars):
                 raise ValueError("The provided MidiScore must have the same number of bars")
 
             # Update the track notes
@@ -138,7 +180,7 @@ class MidiScore:
             start_first_dim = first_dim.start if first_dim.start is not None else 0
             end_first_dim = first_dim.stop if first_dim.stop is not None else len(self.track_keys)
             start_second_dim = second_dim.start if second_dim.start is not None else 0
-            end_second_dim = second_dim.stop if second_dim.stop is not None else len(self.chords)
+            end_second_dim = second_dim.stop if second_dim.stop is not None else len(self.bars)
 
             receiver_shape = (end_first_dim - start_first_dim, end_second_dim - start_second_dim)
             value_shape = value.shape
@@ -165,7 +207,7 @@ class MidiScore:
             value_track = other_score.track_keys[idx]
             self_track = self.track_keys[track_index]
             if bar_range is None:
-                for bar_idx in range(len(self.chords)):
+                for bar_idx in range(len(self.bars)):
                     self.tracks[self_track][bar_idx] = other_score.tracks[value_track][bar_idx]
             else:
                 for abs_idx, bar_idx in enumerate(range(*bar_range)):
@@ -178,8 +220,23 @@ class MidiScore:
         return self.tracks[self.track_keys[idx_track]][idx_bar]
 
     def get_chords_prompt(self):
+        """
+        Return the list of chords in the score in the format [(chord_degree, tonality, mode, chord extension), ...]
+
+        Chord degree : int, degree of the chord in the tonality but 0 indexed (0-6), tonic is 0, fifth is 4
+        Tonality : int, tonality in which the chord is played (0-11), 0 is C, 1 is C#, 2 is D, ...
+        Mode : str, mode of the tonality, "m" for minor, "M" for major
+        Chord extension : str, extension of the chord as in roman numeral notation, in ['', ',6', '64', '7', '65', '43', '2']
+        Optionally you can use (sus2) or (sus4) for suspended chords
+
+        Returns
+        -------
+        chords: list of tuple
+        As specified above
+
+        """
         kept_indexes = [self.SCALE_DEGREE_INDEX, self.TONALITY_INDEX, self.MODE_INDEX, self.CHORD_EXTENSION_INDEX]
-        return [[chord[index] for index in kept_indexes] for chord in self.chords]
+        return [[bar[index] for index in kept_indexes] for bar in self.bars]
     def get_bars(self, item):
         """
         Get the bars between the start and end index
@@ -273,23 +330,23 @@ class MidiScore:
 
         """
         self = self.copy()
-        new_chords = deepcopy(self.chords)
+        new_bars = deepcopy(self.bars)
         new_tracks = deepcopy(self.tracks)
-        removed_chord = new_chords.pop(bar_index)
-        removed_chord_duration = (
-            removed_chord[self.TIME_TICK_END_INDEX]
-            - removed_chord[self.TIME_TICK_START_INDEX]
+        removed_bar = new_bars.pop(bar_index)
+        removed_bar_duration = (
+            removed_bar[self.TIME_TICK_END_INDEX]
+            - removed_bar[self.TIME_TICK_START_INDEX]
         )
-        # Offset the start and end time of the chords
-        for i in range(bar_index, len(new_chords)):
-            new_chords[i][self.TIME_TICK_START_INDEX] -= removed_chord_duration
-            new_chords[i][self.TIME_TICK_END_INDEX] -= removed_chord_duration
+        # Offset the start and end time of the bars
+        for i in range(bar_index, len(new_bars)):
+            new_bars[i][self.TIME_TICK_START_INDEX] -= removed_bar_duration
+            new_bars[i][self.TIME_TICK_END_INDEX] -= removed_bar_duration
 
         for track_key in self.track_keys:
             idx, program, is_drum = track_key
             new_tracks[(idx, program, is_drum)].pop(bar_index)
 
-        return MidiScore(new_chords, new_tracks, self.track_keys, self.tempo, self.tpq)
+        return MidiScore(new_bars, new_tracks, self.track_keys, self.tempo, self.tpq)
 
     @classmethod
     def get_fake_note_vector(cls):
@@ -314,17 +371,17 @@ class MidiScore:
 
         """
         score = self.copy()
-        new_chords = deepcopy(score.chords)
+        new_bars = deepcopy(score.bars)
         new_tracks = deepcopy(score.tracks)
-        new_chords.insert(bar_index + 1, deepcopy(new_chords[bar_index]))
-        chord_duration = (
-            new_chords[bar_index][score.TIME_TICK_END_INDEX]
-            - new_chords[bar_index][score.TIME_TICK_START_INDEX]
+        new_bars.insert(bar_index + 1, deepcopy(new_bars[bar_index]))
+        bar_duration = (
+            new_bars[bar_index][score.TIME_TICK_END_INDEX]
+            - new_bars[bar_index][score.TIME_TICK_START_INDEX]
         )
-        # Offset the start and end time of the chords
-        for i in range(bar_index + 1, len(new_chords)):
-            new_chords[i][score.TIME_TICK_START_INDEX] += chord_duration
-            new_chords[i][score.TIME_TICK_END_INDEX] += chord_duration
+        # Offset the start and end time of the bars
+        for i in range(bar_index + 1, len(new_bars)):
+            new_bars[i][score.TIME_TICK_START_INDEX] += bar_duration
+            new_bars[i][score.TIME_TICK_END_INDEX] += bar_duration
 
         for track_key in score.track_keys:
             idx, program, is_drum = track_key
@@ -332,16 +389,16 @@ class MidiScore:
                 bar_index + 1, score.get_fake_note_vector()
             )
 
-        return MidiScore(new_chords, new_tracks, score.track_keys, score.tempo, score.tpq)
+        return MidiScore(new_bars, new_tracks, score.track_keys, score.tempo, score.tpq)
 
-    def notes_to_note_tick_list(self, notes, chords):
+    def notes_to_note_tick_list(self, notes, bars):
         """
 
         Parameters
         ----------
         notes :
             
-        chords :
+        bars :
             
 
         Returns
@@ -349,7 +406,7 @@ class MidiScore:
 
         """
         note_tick_list = []
-        for idx, (chord, note_list) in enumerate(zip(chords, notes)):
+        for idx, (bar, note_list) in enumerate(zip(bars, notes)):
             for note in note_list:
 
                 note_tick_list.append(
@@ -357,10 +414,10 @@ class MidiScore:
                         note.start,
                         note.end,
                         note.pitch,
-                        chord[self.TIME_SIGNATURE_NUMERATOR_INDEX],
-                        chord[self.TIME_SIGNATURE_DENOMINATOR_INDEX],
-                        chord[self.TIME_TICK_START_INDEX],
-                        chord[self.TIME_TICK_END_INDEX],
+                        bar[self.TIME_SIGNATURE_NUMERATOR_INDEX],
+                        bar[self.TIME_SIGNATURE_DENOMINATOR_INDEX],
+                        bar[self.TIME_TICK_START_INDEX],
+                        bar[self.TIME_TICK_END_INDEX],
                         idx,
                     )
                 )
@@ -381,11 +438,11 @@ class MidiScore:
         score = Score(self.tpq)
         score.tempos.append(Tempo(0, self.tempo))
         current_ts = None
-        for chord in self.chords:
+        for bar in self.bars:
             ts = TimeSignature(
-                chord[self.TIME_TICK_START_INDEX],
-                chord[self.TIME_SIGNATURE_NUMERATOR_INDEX],
-                chord[self.TIME_SIGNATURE_DENOMINATOR_INDEX],
+                bar[self.TIME_TICK_START_INDEX],
+                bar[self.TIME_SIGNATURE_NUMERATOR_INDEX],
+                bar[self.TIME_SIGNATURE_DENOMINATOR_INDEX],
             )
             candidate_ts = (ts.numerator, ts.denominator)
             if current_ts != candidate_ts:
@@ -398,7 +455,7 @@ class MidiScore:
             idx, program, is_drum = track_key
             track = Track(program=program, is_drum=is_drum)
             track.notes = self.track_notes_to_score_notes(
-                self.chords, self.tracks[(idx, program, is_drum)]
+                self.bars, self.tracks[(idx, program, is_drum)]
             )
             score.tracks.append(track)
 
@@ -406,12 +463,12 @@ class MidiScore:
         return score
 
     @classmethod
-    def track_notes_to_score_notes(cls, chords, track_notes):
+    def track_notes_to_score_notes(cls, bars, track_notes):
         """
 
         Parameters
         ----------
-        chords :
+        bars :
             
         track_notes :
             
@@ -422,15 +479,15 @@ class MidiScore:
         """
         notes = []
         has_note = False
-        for idx_bar, chord_track_notes in enumerate(track_notes):
-            for idx in range(len(chord_track_notes["time"])):
+        for idx_bar, bar_track_notes in enumerate(track_notes):
+            for idx in range(len(bar_track_notes["time"])):
                 time = (
-                    chord_track_notes["time"][idx]
-                    + chords[idx_bar][MidiScore.TIME_TICK_START_INDEX]
+                    bar_track_notes["time"][idx]
+                    + bars[idx_bar][MidiScore.TIME_TICK_START_INDEX]
                 )
-                pitch = chord_track_notes["pitch"][idx]
-                duration = chord_track_notes["duration"][idx]
-                velocity = chord_track_notes["velocity"][idx]
+                pitch = bar_track_notes["pitch"][idx]
+                duration = bar_track_notes["duration"][idx]
+                velocity = bar_track_notes["velocity"][idx]
                 notes.append(Note(time, duration, pitch, velocity))
                 has_note = True
         if not has_note:
@@ -489,12 +546,12 @@ class MidiScore:
         -------
 
         """
-        new_chords = deepcopy(self.chords)
-        for chord in new_chords:
-            chord[self.TIME_TICK_START_INDEX] += offset
-            chord[self.TIME_TICK_END_INDEX] += offset
+        new_bars = deepcopy(self.bars)
+        for bar in new_bars:
+            bar[self.TIME_TICK_START_INDEX] += offset
+            bar[self.TIME_TICK_END_INDEX] += offset
         return MidiScore(
-            new_chords,
+            new_bars,
             deepcopy(self.tracks),
             deepcopy(self.track_keys),
             self.tempo,
@@ -516,19 +573,19 @@ class MidiScore:
 
         """
 
-        new_chords = deepcopy(self.chords[start_bar:end_bar])
+        new_bars = deepcopy(self.bars[start_bar:end_bar])
         if start_bar is None:
             start_bar = 0
 
         # If start bar > 0 we need to adjust the bar start and end time
-        start_bar_tick = self.chords[start_bar][self.TIME_TICK_START_INDEX]
+        start_bar_tick = self.bars[start_bar][self.TIME_TICK_START_INDEX]
         if start_bar > 0:
-            for chord in new_chords:
-                chord[self.TIME_TICK_START_INDEX] -= start_bar_tick
-                chord[self.TIME_TICK_END_INDEX] -= start_bar_tick
+            for bar in new_bars:
+                bar[self.TIME_TICK_START_INDEX] -= start_bar_tick
+                bar[self.TIME_TICK_END_INDEX] -= start_bar_tick
         assert all(
-            [chord[self.TIME_TICK_START_INDEX] >= 0 for chord in new_chords]
-        ), f"Negative time found in chords {new_chords}"
+            [bar[self.TIME_TICK_START_INDEX] >= 0 for bar in new_bars]
+        ), f"Negative time found in bars {new_bars}"
         new_tracks = {}
         for track_key in self.track_keys:
             idx, program, is_drum = track_key
@@ -536,14 +593,14 @@ class MidiScore:
                 (idx, program, is_drum)
             ][start_bar:end_bar]
             assert len(new_tracks[(idx, program, is_drum)]) == len(
-                new_chords
-            ), "Track and chord length mismatch"
-        return MidiScore(new_chords, new_tracks, self.track_keys, self.tempo, self.tpq)
+                new_bars
+            ), "Track and bar length mismatch"
+        return MidiScore(new_bars, new_tracks, self.track_keys, self.tempo, self.tpq)
 
     def copy(self):
         """ """
         return MidiScore(
-            deepcopy(self.chords),
+            deepcopy(self.bars),
             deepcopy(self.tracks),
             deepcopy(self.track_keys),
             self.tempo,
@@ -551,27 +608,30 @@ class MidiScore:
         )
 
     def get_mask(self):
-        """Get the mask of the score (np.array of shape (n_tracks, n_chords))
-        :return:
+        """Get the mask of the score (np.array of shape (n_tracks, n_bars))
+        The mask allows to specify which bar of the score should be regenerated by a model (ones)
+        The mask is the same size as the score and is empty by default (all zeros)
 
         Parameters
         ----------
 
         Returns
         -------
+        mask: np.array of shape (n_tracks, n_bars)
+            Mask of the score, empty by default (all zeros)
 
         """
         import numpy as np
 
-        mask = np.zeros((len(self.track_keys), len(self.chords)))
+        mask = np.zeros((len(self.track_keys), len(self.bars)))
 
         return mask
 
     def get_empty_controls(self, prevent_silence=False):
-        """Get the mask, the tags and the chords of the current score.
-        The mask is a np.array of shape (n_tracks, n_chords)
-        The tags is a list of list of list of size (n_tracks, n_chords, <variable size>)
-        The chords is a list of size (n_chords,)
+        """Get the mask, the tags and the bars of the current score.
+        The mask is a np.array of shape (n_tracks, n_bars)
+        The tags is a list of list of list of size (n_tracks, n_bars, <variable size>)
+        The bars is a list of size (n_bars,)
 
         Parameters
         ----------
@@ -585,8 +645,8 @@ class MidiScore:
         mask = self.get_mask()
         tags = [[[] for _ in range(mask.shape[1])] for _ in range(mask.shape[0])]
         tags = self.prevent_silence_tags(tags) if prevent_silence else tags
-        chords = [None for _ in range(mask.shape[1])]
-        return mask, tags, chords
+        bars = [None for _ in range(mask.shape[1])]
+        return mask, tags, bars
 
     @classmethod
     def prevent_silence_tags(self, tags):
@@ -610,7 +670,7 @@ class MidiScore:
     @property
     def nb_bars(self):
         """ """
-        return len(self.chords)
+        return len(self.bars)
 
     def get_track_subset(self, start, end):
         """
@@ -645,10 +705,10 @@ class MidiScore:
             :return:
 
         """
-        mask = np.zeros((len(self.track_keys), len(self.chords)))
+        mask = np.zeros((len(self.track_keys), len(self.bars)))
         for i, track_key in enumerate(self.track_keys):
             idx, program, is_drum = track_key
-            for j, chord in enumerate(self.chords):
+            for j, bar in enumerate(self.bars):
                 mask[i, j] = (
                     self.tracks[(idx, program, is_drum)][j]["pitch"].shape[0]
                     == 0
@@ -688,7 +748,7 @@ class MidiScore:
             if bar_to_cut_end == len(silenced_bars):
                 break
         score = score.get_score_between(
-            bar_to_cut_start, len(score.chords) - bar_to_cut_end
+            bar_to_cut_start, len(score.bars) - bar_to_cut_end
         )
         return score
 
@@ -698,15 +758,15 @@ class MidiScore:
         Parameters
         ----------
         mask :
-            np.array of shape (n_tracks, n_chords)
+            np.array of shape (n_tracks, n_bars)
 
         Returns
         -------
 
         """
-        if mask.shape[1] != len(self.chords):
+        if mask.shape[1] != len(self.bars):
             raise ValueError(
-                f"Mask length does not match score length {mask.shape[1]} != {len(self.chords)}"
+                f"Mask length does not match score length {mask.shape[1]} != {len(self.bars)}"
             )
         if mask.shape[1] > 16:
             raise ValueError("Mask length must be less than 16")
@@ -715,49 +775,13 @@ class MidiScore:
                 "Mask number of tracks does not match score number of tracks"
             )
 
-    def _create_temp_midi_files(self):
-        """ """
-        prompt_file = tempfile.NamedTemporaryFile(suffix=".txt").name
-        output_file = tempfile.NamedTemporaryFile(suffix=".txt").name
-        midi_file = tempfile.NamedTemporaryFile(suffix=".mid").name
-        output_midi_file = tempfile.NamedTemporaryFile(suffix=".mid").name
-        self.write(midi_file)
-        return prompt_file, output_file, midi_file, output_midi_file
-
-    def remove_temp_midi_files(
-        self, prompt_file, output_file, midi_file, output_midi_file
-    ):
-        """
-
-        Parameters
-        ----------
-        prompt_file :
-            
-        output_file :
-            
-        midi_file :
-            
-        output_midi_file :
-            
-
-        Returns
-        -------
-
-        """
-        os.remove(prompt_file)
-        os.remove(output_file)
-        os.remove(midi_file)
-        os.remove(output_midi_file)
-
-
-
     def check_times(self):
         """ """
         for track_key in self.track_keys:
             idx, program, is_drum = track_key
             assert len(self.tracks[(idx, program, is_drum)]) == len(
-                self.chords
-            ), "Track and chord length mismatch"
+                self.bars
+            ), "Track and bar length mismatch"
 
     def sanitize_score(self, score_to_compare, mask):
         """Do checks after predicting a score
@@ -807,26 +831,26 @@ class MidiScore:
             new_tracks[(idx, program, is_drum)] = deepcopy(
                 self.tracks[(idx, program, is_drum)]
             )
-            for idx_chord, chord in enumerate(self.chords):
-                chord_start = chord[self.TIME_TICK_START_INDEX]
-                chord_end = chord[self.TIME_TICK_END_INDEX]
-                chord_duration = chord_end - chord_start
+            for idx_bar, bar in enumerate(self.bars):
+                bar_start = bar[self.TIME_TICK_START_INDEX]
+                bar_end = bar[self.TIME_TICK_END_INDEX]
+                bar_duration = bar_end - bar_start
                 for idx_note, note in enumerate(
-                    new_tracks[(idx, program, is_drum)][idx_chord]["time"]
+                    new_tracks[(idx, program, is_drum)][idx_bar]["time"]
                 ):
                     if (
                         note
-                        + new_tracks[(idx, program, is_drum)][idx_chord][
+                        + new_tracks[(idx, program, is_drum)][idx_bar][
                             "duration"
                         ][idx_note]
-                        > chord_duration
+                        > bar_duration
                     ):
-                        new_tracks[(idx, program, is_drum)][idx_chord][
+                        new_tracks[(idx, program, is_drum)][idx_bar][
                             "duration"
-                        ][idx_note] = (chord_duration - note)
+                        ][idx_note] = (bar_duration - note)
 
         return MidiScore(
-            deepcopy(self.chords),
+            deepcopy(self.bars),
             new_tracks,
             deepcopy(self.track_keys),
             self.tempo,
@@ -859,7 +883,7 @@ class MidiScore:
         new_track_key = (len(self.track_keys), program, bool(is_drum))
         self.track_keys.append(new_track_key)
         self.tracks[new_track_key] = [
-            self.get_fake_note_vector() for _ in range(len(self.chords))
+            self.get_fake_note_vector() for _ in range(len(self.bars))
         ]
         return self
 
@@ -954,10 +978,10 @@ class MidiScore:
         """
         score = self.copy()
         if silence_bars > 0:
-            initial_length = len(score.chords)
+            initial_length = len(score.bars)
             score = score.add_silence_bars(silence_bars, add_fake_notes=False)
             assert (
-                len(score.chords) == initial_length + silence_bars
+                len(score.bars) == initial_length + silence_bars
             ), "Silence bars not added correctly"
         other_score = other_score.copy()
         # Assert that the other score has the same tracks
@@ -967,9 +991,9 @@ class MidiScore:
             else:
                 raise ValueError("Track keys do not match")
         # Offset the other score to start after the current score
-        offset = score.chords[-1][score.TIME_TICK_END_INDEX]
+        offset = score.bars[-1][score.TIME_TICK_END_INDEX]
         new_other_score = other_score.offset_score(offset)
-        new_chords = score.chords + new_other_score.chords
+        new_bars = score.bars + new_other_score.bars
         new_tracks = {}
         for track_key in score.track_keys:
             idx, program, is_drum = track_key
@@ -978,7 +1002,7 @@ class MidiScore:
                 + new_other_score.tracks[(idx, program, is_drum)]
             )
         return MidiScore(
-            new_chords, new_tracks, score.track_keys, score.tempo, score.tpq
+            new_bars, new_tracks, score.track_keys, score.tempo, score.tpq
         )
 
     def add_silence_bars(self, n_bars, add_fake_notes=True):
@@ -998,25 +1022,25 @@ class MidiScore:
         score = self.copy()
         # Assert that the other score has the same tracks
         # Offset the other score to start after the current score
-        offset = score.chords[-1][score.TIME_TICK_END_INDEX]
+        offset = score.bars[-1][score.TIME_TICK_END_INDEX]
         if n_bars <= 0:
             raise ValueError(
                 "n_bars must be positive"
             )  # If we want to add silence bars
         offset += n_bars * (
-            score.chords[-1][score.TIME_TICK_END_INDEX]
-            - score.chords[-1][score.TIME_TICK_START_INDEX]
+            score.bars[-1][score.TIME_TICK_END_INDEX]
+            - score.bars[-1][score.TIME_TICK_START_INDEX]
         )
-        new_chords = score.chords
-        time = new_chords[-1][score.TIME_TICK_END_INDEX]
+        new_bars = score.bars
+        time = new_bars[-1][score.TIME_TICK_END_INDEX]
         last_bar_duration = (
-            score.chords[-1][score.TIME_TICK_END_INDEX]
-            - score.chords[-1][score.TIME_TICK_START_INDEX]
+            score.bars[-1][score.TIME_TICK_END_INDEX]
+            - score.bars[-1][score.TIME_TICK_START_INDEX]
         )
         for i in range(n_bars):
-            new_chords.append(deepcopy(score.chords[-1]))
-            new_chords[-1][score.TIME_TICK_START_INDEX] = time
-            new_chords[-1][score.TIME_TICK_END_INDEX] = time + last_bar_duration
+            new_bars.append(deepcopy(score.bars[-1]))
+            new_bars[-1][score.TIME_TICK_START_INDEX] = time
+            new_bars[-1][score.TIME_TICK_END_INDEX] = time + last_bar_duration
             time += last_bar_duration
 
         new_tracks = {}
@@ -1025,7 +1049,7 @@ class MidiScore:
             new_tracks[(idx, program, is_drum)] = score.tracks[
                 (idx, program, is_drum)
             ]
-            for new_chord in new_chords[-n_bars:]:
+            for new_bar in new_bars[-n_bars:]:
                 if add_fake_notes:
                     new_tracks[(idx, program, is_drum)].append(
                         self.get_fake_note_vector()
@@ -1041,10 +1065,10 @@ class MidiScore:
                     )
             # Assert good length
             assert len(new_tracks[(idx, program, is_drum)]) == len(
-                new_chords
-            ), "Track and chord length mismatch"
+                new_bars
+            ), "Track and bar length mismatch"
         return MidiScore(
-            new_chords, new_tracks, score.track_keys, score.tempo, score.tpq
+            new_bars, new_tracks, score.track_keys, score.tempo, score.tpq
         )
 
     @classmethod
@@ -1075,7 +1099,7 @@ class MidiScore:
             (idx, INSTRUMENTS_DICT[ins][0], INSTRUMENTS_DICT[ins][1] == 1)
             for idx, ins in enumerate(instruments)
         ]
-        chords = [
+        bars = [
             [
                 0,
                 0,
@@ -1089,11 +1113,11 @@ class MidiScore:
             ]
             for i in range(nb_bars)
         ]
-        assert len(chords) == nb_bars, "Chords length mismatch"
+        assert len(bars) == nb_bars, "Bars length mismatch"
         tracks = {}
         for track_key in track_keys:
             tracks[track_key] = [cls.get_fake_note_vector() for _ in range(nb_bars)]
 
-            assert len(tracks[track_key]) == nb_bars, "Track and chord length mismatch"
+            assert len(tracks[track_key]) == nb_bars, "Track and bar length mismatch"
 
-        return cls(chords, tracks, track_keys, tempo, tpq=tpq)
+        return cls(bars, tracks, track_keys, tempo, tpq=tpq)

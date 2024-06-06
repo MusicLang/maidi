@@ -3,16 +3,17 @@ from maidi.chords.chord_inference_utils import SCALES
 
 def to_pitch(type, idx, oct, chord):
     """
+    Return the pitch from the note type, idx, octave and chord
 
     Parameters
     ----------
-    type :
+    type : str
         
-    idx :
+    idx : int
         
-    oct :
+    oct : int
         
-    chord :
+    chord : tuple
         
 
     Returns
@@ -20,7 +21,7 @@ def to_pitch(type, idx, oct, chord):
 
     """
     (
-        roman,
+        roman,  #  Chord degree 0-indexed
         tonality_root,
         tonality_mode,
         chord_octave,

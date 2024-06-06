@@ -2,6 +2,7 @@ import numpy as np
 import time
 import os
 import requests
+import tempfile
 from maidi.integrations.base import MidiApiIntegration
 from maidi.integrations.api.musiclang import models
 from maidi import MidiScore
@@ -60,7 +61,7 @@ class MusicLangAPI(MidiApiIntegration):
         ----------
         score : MidiScore
             The score to predict
-        mask : np.array of shape (n_tracks, n_chords)
+        mask : np.array of shape (n_tracks, n_bars)
             The mask to use for the prediction
         model :
             str, model to use (for the API) (Default value = "control_masking_large")
@@ -193,6 +194,36 @@ class MusicLangAPI(MidiApiIntegration):
 
         return score
 
+
+    def poll_api(self, task_id):
+        """Poll the API with a task id once
+        Parameters
+        ----------
+        task_id :
+            str, task identifier you got from the predict call
+
+        Returns
+        -------
+
+        result: None or MidiScore
+
+        Raises
+        ------
+        ValueError
+            Task failed
+
+        """
+        # Poll the API
+        result = self._call_polling_api(task_id)
+        if result["status"] == "COMPLETED":
+            self.pprint(f"Task {task_id} successfully completed")
+            return MidiScore.from_base64(result["result"]["midi"])
+        elif result["status"] == "FAILED":
+            raise ValueError("Task failed")
+        self.pprint(f"Task {task_id} not completed yet")
+
+        return None
+
     def _call_predict_api(
             self, midi_base64, mask, model, temperature, **prediction_kwargs
     ):
@@ -242,7 +273,7 @@ class MusicLangAPI(MidiApiIntegration):
 
         Parameters
         ----------
-        mask : np.array, shape (n_tracks, n_chords)
+        mask : np.array, shape (n_tracks, n_bars)
             The mask to use for the prediction
         model : str, optional, (Default value = "control_masking_large")
             The choice of model to use
@@ -252,7 +283,7 @@ class MusicLangAPI(MidiApiIntegration):
             If True, return the task id, otherwise wait for the request to finish with polling
         polling_interval : int, optional, (Default value = 1)
             Interval in seconds to poll the API
-        **prediction_kwargs : dict
+        **prediction_kwargs :
             Additional arguments for the model (for example chord and control tags)
 
         Returns
@@ -304,7 +335,7 @@ class MusicLangAPI(MidiApiIntegration):
         mask = np.asarray(mask)
         score.check_mask(mask)
         prompt_file, output_file, midi_file, output_midi_file = (
-            score._create_temp_midi_files()
+            self._create_temp_midi_files(score)
         )
         score.write(midi_file)
         predictor(
@@ -321,7 +352,41 @@ class MusicLangAPI(MidiApiIntegration):
         )
         score = MidiScore.from_midi(output_midi_file)
         # Clean up the files
-        score.remove_temp_midi_files(
+        self.remove_temp_midi_files(
             prompt_file, output_file, midi_file, output_midi_file
         )
         return score
+
+    def _create_temp_midi_files(self, score):
+        """ """
+        prompt_file = tempfile.NamedTemporaryFile(suffix=".txt").name
+        output_file = tempfile.NamedTemporaryFile(suffix=".txt").name
+        midi_file = tempfile.NamedTemporaryFile(suffix=".mid").name
+        output_midi_file = tempfile.NamedTemporaryFile(suffix=".mid").name
+        score.write(midi_file)
+        return prompt_file, output_file, midi_file, output_midi_file
+
+    def remove_temp_midi_files(
+            self, prompt_file, output_file, midi_file, output_midi_file
+    ):
+        """
+
+        Parameters
+        ----------
+        prompt_file :
+
+        output_file :
+
+        midi_file :
+
+        output_midi_file :
+
+
+        Returns
+        -------
+
+        """
+        os.remove(prompt_file)
+        os.remove(output_file)
+        os.remove(midi_file)
+        os.remove(output_midi_file)

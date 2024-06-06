@@ -1,3 +1,16 @@
+"""
+Generate a new track on a midi file with MusicLangAPI
+======================================================
+
+In this example :
+- We load a 4 bar template from a midi file
+- We add a clean guitar track
+- We call the musiclang API to predict the score
+- We save the predicted score to a midi file
+
+"""
+
+
 import os
 from maidi import MidiScore, instrument, midi_library
 from maidi.integrations.api import MusicLangAPI

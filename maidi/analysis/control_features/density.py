@@ -22,9 +22,9 @@ class DensityTagsProvider(TagsProvider):
     ALL_TAGS = get_tags_names()
 
     def get_tags(self, track_bar, chord, score):
-        from maidi.utils.chord_helpers import chord_to_bar_duration_in_quarters
+        from maidi.utils.bar_helpers import bar_to_bar_duration_in_quarters
         notes = self.get_start_end_notes(track_bar, chord, score)
-        bar_duration = chord_to_bar_duration_in_quarters(chord)
+        bar_duration = bar_to_bar_duration_in_quarters(chord)
         return get_density_tags(notes, bar_duration)
 
 def get_density_value(density):
