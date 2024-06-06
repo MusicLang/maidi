@@ -4,7 +4,7 @@ M(AI)DI
 =======
 
 M(ai)di is an open source python library that aims to highlight the capabilities and usefulness of the **Symbolic Music GenAI**. 
-It interfaces with the best symbolic music AI models and APIs to accelerate integrations in music tech products.
+It interfaces with the best symbolic music AI models and APIs to **accelerate AI integration in music tech products**.
 It came from the realization that artists need to manipulate MIDI and not only audio in their composition workflow but tools are lacking in this area.
 
 So here we are, providing a simple and efficient way to manipulate midi files and integrate with music AI models.
