@@ -183,6 +183,8 @@ predicted_score = api.predict(score,
 predicted_score.write("predicted_score.mid")
 ```
 
+For more details on the API, please refer to the [MusicLang API documentation](https://api.musiclang.io/documentation).
+
 
 With other tools and APIs
 -------------------------
@@ -200,6 +202,14 @@ We welcome contributions to the project as long as it fits the main philosophy o
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
+
+Next steps
+==========
+
+- Add musiclang_predict song extension open source model
+- Improve documentation and examples
+- Add more integrations with other symbolic models
+- Better handling of the chord progression and tags
 
 License
 =======
