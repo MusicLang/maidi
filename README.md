@@ -29,10 +29,9 @@ To install the package, you can use pip:
 pip install maidi
 ```
 
-To get the latest version from the repository, you can use:
+Or to get the latest version from the repository, you can use:
 
 ```bash
-// Git url https://github.com/MusicLang/maidi.git
 pip install git+github.com/MusicLang/maidi.git
 
 ```
