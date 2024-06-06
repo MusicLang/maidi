@@ -2,18 +2,18 @@ from maidi.analysis.parse_notes import parse_pitch
 from maidi.analysis import TagsProvider
 
 INTERESTING_NOTES = [
-    ("s", 1),
-    ("s", 3),
-    ("s", 5),
-    ("h", 1),
-    ("h", 2),
-    ("h", 3),
-    ("h", 4),
-    ("h", 6),
-    ("h", 8),
-    ("h", 9),
-    ("h", 10),
-    ("h", 11),
+    ("s", 1),  # The second note of the scale (9)
+    ("s", 3), # The fourth note of the scale (11)
+    ("s", 5), # The sixth note of the scale (13)
+    ("h", 1), # The second note of the chromatic scale (b9)
+    ("h", 2), # The third note of the chromatic scale (9)
+    ("h", 3), # The fourth note of the chromatic scale (#9)
+    ("h", 4), # The fifth note of the chromatic scale (natural 3)
+    ("h", 6), # The seventh note of the chromatic scale (b5)
+    ("h", 8), # The ninth note of the chromatic scale (b6)
+    ("h", 9), # The tenth note of the chromatic scale (natural 6)
+    ("h", 10), # The eleventh note of the chromatic scale (b7)
+    ("h", 11), # The twelfth note of the chromatic scale (natural 7)
 ]
 
 

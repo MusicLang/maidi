@@ -1,8 +1,14 @@
 # Contributing to the Project
 
-## We welcome any pull request that follows the following philosophy:
+M(ai)di is an open source project that aims to highlight the capabilities and usefulness of the Symbolic Music GenAI. 
 
-- **Integration of Symbolic Music API**: If you have built something cool with the Symbolic Music GenAI and you have an API, we would love to integrate it into the project. It can be a free or a paid API. This integration would not only allow you to gain visibility by promoting your API with a high-level interface but also extend the catalog of features we can propose to users. While we don't focus on pure audio here, we are open to any kind of integration that could help transcribe audio to MIDI or vice versa.
+We welcome contributions to the project as long as they fit the main philosophy of the project:
+
+## Our mission:
+
+- **Integration of symbolic music open source tools**: It can be a model or any algorithm that generates music in a symbolic format. We are open to any kind of integration that could help users generate music.
+- 
+- **Integration of symbolic music APIs**: If you have an API that process midi files, we would love to integrate it into the project. It can be a free or a paid API. This integration would not only allow you to gain visibility by promoting your API with a high-level interface but also extend the catalog of features we can propose to users. While we don't focus on pure audio here, we are open to any kind of integration that could help transcribe audio to MIDI or vice versa.
 
 - **Composition Helpers and Tools**: If you have a feature that would assist with algorithmic composition of music, we are definitely interested.
 
@@ -34,10 +40,6 @@ In more technical terms, here are the guidelines to follow when contributing to 
 
 - **Code Coverage**: We utilize [coverage](https://coverage.readthedocs.io/en/coverage-5.5/) for code coverage checks.
 
-- **Type Hints**: We use [mypy](https://mypy.readthedocs.io/en/stable/) for type hint checks.
-
-- **Continuous Integration**: We utilize [GitHub Actions](https://docs.github.com/en/actions) for continuous integration.
-
-- **Use of asynchronous APIs**: If your API takes a long time to respond, please make it asynchronous, see how we have implemented the [MusicLang API]() for example.
+- **Use of asynchronous APIs**: If your API takes a long time to respond, please make it asynchronous, see how we have implemented the [MusicLang API](https://api.musiclang.io/documentation) for example.
 
 Please ensure to adhere to these guidelines when contributing to the project; otherwise, your pull request might be rejected.

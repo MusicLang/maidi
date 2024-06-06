@@ -5,6 +5,7 @@ test.mid
 # Pycaches
 __pycache__/
 test*.mid
+predicted*.mid
 all_tokens.txt
 special_tokens.txt
 data/

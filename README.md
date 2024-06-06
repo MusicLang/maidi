@@ -1,14 +1,22 @@
 ![M(AI)DI](assets/logo2.webp)
 
-
 M(AI)DI
 =======
 
-M(AI)DI is the MIDI file processor designed to integrate with symbolic music generative AI models.
+M(ai)di is an open source python library that aims to highlight the capabilities and usefulness of the **Symbolic Music GenAI**. 
+It interfaces with the best symbolic music AI models and APIs to accelerate integrations in music tech products.
+It came from the realization that artists need to manipulate MIDI and not only audio in their composition workflow but tools are lacking in this area.
 
-It is designed to prepare your midi files for inference and post-process the generated midi files.
-We don't focus on model training or tokenization, but we provide a simple and efficient way to integrate your models with M(AI)DI.
+So here we are, providing a simple and efficient way to manipulate midi files and integrate with music AI models.
+In a few lines of code you will be able to parse, analyze and generate midi files with the best music AI models available.
 
+Here is where M(ai)di shines:
+
+- **Midi Files Manipulation**: Load, save, edit, merge and analyze midi files with ease.
+- **Music AI Models Integration**: Integrate with the best music AI models and APIs to generate music.
+- **Automatic tagging**: Get the chords, tempo, time signature, and many other musical features for each bar/instrument of the midi file.
+
+**Disclaimer** : We really focus on processing midi files and model inference calls. We don't focus on audio features neither model training.
 
 Getting Started
 ===============
@@ -21,11 +29,22 @@ To install the package, you can use pip:
 pip install maidi
 ```
 
+To get the latest version from the repository, you can use:
+
+```bash
+// Git url https://github.com/MusicLang/maidi.git
+pip install git+github.com/MusicLang/maidi.git
+
+```
+
 Usage
 -----
 
+A simple code snippet to load and analyze a midi file : 
+
 ```python
-from maidi import MidiScore
+from maidi import MidiScore, ScoreTagger
+from maidi.analysis import tags_providers
 
 # Load a midi file
 score = MidiScore('path/to/midi/file.mid')
@@ -35,12 +54,26 @@ score = score[0, :4]
 
 # Get the chord progression of the score
 chords = score.get_chords_prompt()
+print('Chords : ')
+print(chords)
 
-# Save the score
-score.write('path/to/save/midi/file.mid')
+# Get the tags of the scores
+filepath = "examples/example1.mid"
+
+tagger = ScoreTagger(
+    [
+        tags_providers.DensityTagsProvider(),
+        tags_providers.MinMaxPolyphonyTagsProvider(),
+        tags_providers.MinMaxRegisterTagsProvider(),
+        tags_providers.SpecialNotesTagsProvider(),
+    ]
+)
+
+tags = tagger.tag_score(score)
+
+print('Tags for the score : ')
+print(tags)
 ```
-
-
 
 
 Integrations
@@ -54,7 +87,7 @@ The API is integrated into M(AI)DI to provide a seamless experience for the user
 
 
 
-**A simple example** : generate a 4 bar score with the musiclang masking model async API.
+**A simple example: Generate a 4 bar score** with the musiclang masking model API.
 Just set your API_URL and API_KEY in the environment (or get one [here](www.musiclang.io)) and run the following code :
 
 ```python
@@ -89,8 +122,7 @@ predicted_score = api.predict(score,
 predicted_score.write("predicted_score.mid")
 ```
 
-
-**A more complex example** : generate a 4 bar score with the musiclang masking model async API.
+**Generate a new track in a score** : Start from a midi file and add a track.
 
 ```python
 import os
@@ -116,9 +148,24 @@ predicted_score = api.predict(score,
 predicted_score.write("predicted_score.mid")
 ```
 
+With other tools and APIs
+-------------------------
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 Contributing
 ============
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+We welcome contributions to the project as long as it fits the main philosophy of the project : 
+
+- Manipulate midi files
+- Integrate with (symbolic) music AI models (inference only)
+- Provide a simple and efficient API
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+
+
+License
+=======
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE.md) file for details.
