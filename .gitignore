@@ -22,3 +22,8 @@ docs/_templates/
 _build/
 _static/
 _templates/
+dist/
+build/
+*.egg-info/
+*.egg
+*.egg-info
