@@ -9,7 +9,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-project = 'M(AI)di'
+project = 'M(AI)DI'
 copyright = '2024, GARDIN Florian, ZATAR Mehdi'
 author = 'GARDIN Florian, ZATAR Mehdi'
 release = '0.0.1'
@@ -31,7 +31,7 @@ extensions = ['sphinx_rtd_theme',
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = "furo"
 html_static_path = ['_static']
 
 

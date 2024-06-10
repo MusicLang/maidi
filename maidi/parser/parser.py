@@ -115,9 +115,6 @@ class Parser:
         # Now we have a dict of arrays for each track, grouped by bar, let's do the chord inference
         start = time.time()
         chords = fast_chord_inference(tracks, chord_durations)
-        chords = [
-            list(c) + list(b) for c, b in zip(chords, bars)
-        ]  # Add bar start, bar end
         self.pprint("Chord inference time: ", time.time() - start)
         return chords, tracks, track_keys, tempo
 

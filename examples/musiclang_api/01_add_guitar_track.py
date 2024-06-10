@@ -27,7 +27,7 @@ mask, _, _ = score.get_empty_controls(prevent_silence=True)
 mask[-1, :] = 1  # Generate the last track
 
 # Call the musiclang API to predict the score
-api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+api = MusicLangAPI(api_key=API_KEY, verbose=True)
 predicted_score = api.predict(score,
     mask, async_mode=False, polling_interval=3
 )

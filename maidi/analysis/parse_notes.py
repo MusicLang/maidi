@@ -28,8 +28,6 @@ def to_pitch(type, idx, oct, chord):
         real_extension,
         num,
         den,
-        chord_start,
-        chord_end,
     ) = chord
     base_scale = SCALES[tonality_mode]
     base_scale = (
@@ -187,8 +185,6 @@ def parse_pitch(pitch, chord, is_drum, is_absolute):
         real_extension,
         num,
         den,
-        chord_start,
-        chord_end,
     ) = chord
     pitch = pitch - 60  # C5
     if is_drum:

@@ -56,7 +56,7 @@ In this example :
     mask[:, :] = 1  # Regenerate everything in the score
 
     # Call the musiclang API to predict the score
-    api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+    api = MusicLangAPI(api_key=API_KEY, verbose=True)
     task_id = api.predict(score,
                                   mask,
                                   tags=tags,

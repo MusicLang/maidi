@@ -1,19 +1,50 @@
 .. _integrations:
 
-Integrations
-============
+MusicLang API
+====================
 
-For the time being we only support integration with the MusicLang API. We are working on adding more integrations with other tools and APIs.
-We also gladly accept contributions to add more integrations.
+MusicLang is your **co-pilot for music composition**.
 
-With MusicLang API
-------------------
+Based on generative AI technology and trained on CC0 midi music data.
 
-MusicLang is a co-pilot for music composition (see https://www.musiclang.io). It is a music AI model that can modify a midi score based on a prompt.
-The API is integrated into M(AI)DI to provide a seamless experience for the user.
+Using this package you get an **easy python integration with MusicLang** for your music tech projects.
+
+Learn more about musiclang `here <https://www.musiclang.io>`_.
+
+
+Documentation
+--------------------------
+
+
+:ref:`general_usage`
+
+
+:ref:`models`
+
+
+:ref:`chords`
+
+
+:ref:`tags`
+
+
+:ref:`transitions`
+
+
+Official API documentation
+---------------------------
+
+While this package provides a simple interface to the MusicLang API, you can also use the API directly :
+
+`Read more here <http://api.musiclang.io/documentation>`_
+
+Some examples
+--------------
+
+
 
 **A simple example: Generate a 4 bar score** with the musiclang masking model API.
-Just set your API_URL and API_KEY in the environment (or get one [here](www.musiclang.io)) and run the following code ::
+Just set your API_URL and API_KEY in the environment (or get one `here <https://www.musiclang.io>`_) and run the following code ::
 
     from maidi import MidiScore
     from maidi import instrument

@@ -20,6 +20,8 @@ In a few lines of code you will be able to parse, analyze and generate midi file
 
 *Disclaimer : We really focus on processing midi files and model inference calls. We don't implement audio features, neither model training, neither tokenization.*
 
+[Read the official documentation](https://maidi.readthedocs.io/en/latest/)
+
 Getting Started
 ===============
 
@@ -76,7 +78,7 @@ The API is integrated into M(AI)DI to provide a seamless experience for the user
 
 
 **A simple example: Generate a 4 bar score** with the musiclang masking model API.
-Just set your API_URL and API_KEY in the environment (or get one [here](www.musiclang.io)) and run the following code :
+Just set your API_KEY in the environment (or get one [here](www.musiclang.io)) and run the following code :
 
 ```python
 from maidi import MidiScore
@@ -84,8 +86,7 @@ from maidi import instrument
 import os
 from maidi.integrations.api import MusicLangAPI
 
-# Assuming API_URL and API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
+# Assuming API_KEY is set in the environment
 API_KEY = os.getenv("API_KEY")
 
 # Your choice of params for generation here
@@ -103,7 +104,7 @@ mask, tags, chords = score.get_empty_controls(prevent_silence=True)
 mask[:, :] = 1  # Regenerate everything in the score
 
 # Call the musiclang API to predict the score
-api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+api = MusicLangAPI(api_key=API_KEY, verbose=True)
 predicted_score = api.predict(score,
     mask, tags=tags, chords=chords, async_mode=False, polling_interval=5
 )
@@ -117,8 +118,7 @@ import os
 from maidi import MidiScore, instrument, midi_library
 from maidi.integrations.api import MusicLangAPI
 
-# Assuming API_URL and API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
+# Assuming API_KEY is set in the environment
 API_KEY = os.getenv("API_KEY")
 
 # Create a 4 bar template with the given instruments
@@ -129,7 +129,7 @@ mask, _, _ = score.get_empty_controls(prevent_silence=True)
 mask[-1, :] = 1  # Generate the last track
 
 # Call the musiclang API to predict the score
-api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+api = MusicLangAPI(api_key=API_KEY, verbose=True)
 predicted_score = api.predict(score,
     mask, async_mode=False, polling_interval=3
 )
@@ -144,8 +144,7 @@ from maidi import MidiScore, ScoreTagger, midi_library
 from maidi.analysis import tags_providers
 from maidi.integrations.api import MusicLangAPI
 
-# Assuming API_URL and API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
+# Assuming API_KEY are set in the environment
 API_KEY = os.getenv("API_KEY")
 # Load a midi file
 score = MidiScore.from_midi(midi_library.get_midi_file('example1'))
@@ -166,7 +165,7 @@ chords = score.get_chords_prompt()
 mask = score.get_mask()
 mask[:, :] = 1  # Regenerate everything in the score
 
-api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+api = MusicLangAPI(api_key=API_KEY, verbose=True)
 predicted_score = api.predict(score,
     mask, async_mode=False, polling_interval=3
 )

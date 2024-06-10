@@ -10,17 +10,20 @@ We welcome contributions to the project as long as they fit the main philosophy 
 Our mission:
 ================
 
+
+**What we accept**
+
 - **Integration of symbolic music open source tools**: It can be a model or any algorithm that generates music in a symbolic format. We are open to any kind of integration that could help users generate music.
--
-- **Integration of symbolic music APIs**: If you have an API that process midi files, we would love to integrate it into the project. It can be a free or a paid API. This integration would not only allow you to gain visibility by promoting your API with a high-level interface but also extend the catalog of features we can propose to users. While we don't focus on pure audio here, we are open to any kind of integration that could help transcribe audio to MIDI or vice versa.
 
-- **Composition Helpers and Tools**: If you have a feature that would assist with algorithmic composition of music, we are definitely interested.
+- **Integration of symbolic music APIs**: If you have an API that process midi files, we would love to integrate it into the project. It can be a free or a paid API. This integration would not only allow you to gain visibility by promoting your API with a high-level interface but also extend the catalog of features we can propose to users. While we don't focus on pure audio here, we are open to features that could help transcribe audio to MIDI or vice versa.
 
-- **Interface Improvements**: If you have an idea to enhance how MIDI files are handled and/or the main data structures, we would love to hear about it. We aim to make the library as easy to use as possible while ensuring it fits most GenAI use cases.
+- **Composition Helpers and Tools**: If you have a feature that could be directly implemented in maidi core that assists with algorithmic composition of music, we are definitely interested.
+
+- **Data structure improvements**: Anything that enhances how MIDI files are handled and/or the main data structures, is welcomed as long as it is not an obscure optimization trick that prevents readability.
 
 - **Bug Fixes**: If you find a bug, please report it in the issues section. If you can fix it, please submit a pull request.
 
-## What we won't accept:
+**What we won't accept:**
 
 - **Pure Audio Features**: We are not focusing on audio features here; our focus is on symbolic music generation.
 

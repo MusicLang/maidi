@@ -6,9 +6,22 @@ import tempfile
 from maidi.integrations.base import MidiApiIntegration
 from maidi.integrations.api.musiclang import models
 from maidi import MidiScore
-
+from maidi import constants
 
 # Enum of models
+
+def get_musiclang_tag_list():
+    from maidi.analysis.tags_providers import DensityTagsProvider, MinMaxPolyphonyTagsProvider,MinMaxRegisterTagsProvider, SpecialNotesTagsProvider
+    tag_providers= [DensityTagsProvider, MinMaxPolyphonyTagsProvider, MinMaxRegisterTagsProvider, SpecialNotesTagsProvider]
+    all_tags = []
+    for tag_provider in tag_providers:
+        provider = tag_provider()
+        all_tags += provider.get_tags_list()
+
+    return set(all_tags)
+
+
+AVAILABLE_TAGS = get_musiclang_tag_list()
 
 
 class MusicLangAPI(MidiApiIntegration):
@@ -33,9 +46,9 @@ class MusicLangAPI(MidiApiIntegration):
     """
     PREDICT_ASYNC_ENDPOINT = "predict_long"
     POLLING_ENDPOINT = "polling_predict"
+    MAX_CONTEXT = 16 # Maximum context size of 16 bars for all masking models
 
-
-    def __init__(self, api_url, api_key, verbose=False):
+    def __init__(self, api_url='https://api.musiclang.io', api_key=None, verbose=False):
         """
         Initialize the MusicLangAPI class
 
@@ -52,6 +65,13 @@ class MusicLangAPI(MidiApiIntegration):
         super().__init__()
         self.api_url = api_url
         self.api_key = api_key
+
+        if self.api_key is None:
+            # Get env
+            self.api_key = os.getenv(constants.API_KEY_VARIABLE, None)
+        if self.api_key is None:  # If not in env and not passed as a variable, raise an error
+            raise ValueError('API key missing')
+
         self.verbose = verbose
 
 
@@ -71,6 +91,8 @@ class MusicLangAPI(MidiApiIntegration):
             regen_missing_bars=False,
             async_mode=False,
             polling_interval=1,
+            tags=None,
+            chords=None,
             **prediction_kwargs,
     ):
         """Predict the score with the given mask and prediction parameters
@@ -107,6 +129,12 @@ class MusicLangAPI(MidiApiIntegration):
             bool, if True return the task id, otherwise wait for the request to finish with polling (Default value = False)
         polling_interval :
             int, interval in seconds to poll the API, only used if async_mode is False (Default value = 1)
+
+        chords: list[tuple or None ]  or None
+            List of tuple (chord_degree, tonality_degree, tonality_mode, roman numeral extension). Check the user guide for more information
+        tags: list[list[list]] or None (n_tracks, n_bars, <variable length number of tags>)
+            Way to specify soft constraints on the generation for each bar of each track, check the user guide for more information
+
         **prediction_kwargs :
 
         Returns
@@ -117,11 +145,16 @@ class MusicLangAPI(MidiApiIntegration):
         """
 
         if model not in models.MODELS:
-            raise ValueError(f"Model {model} not in {models.MODELS}")
+            raise ValueError(f"Model {model} not existing. Models available : {models.MODELS}")
         if temperature > 1.0:
             raise ValueError("Temperature must be lower than 1.0")
         if polling_interval < 0:
             raise ValueError("Polling interval must be > 0")
+        if score.nb_bars > MusicLangAPI.MAX_CONTEXT:
+            raise ValueError(f"The prompted score must be less than {MusicLangAPI.MAX_CONTEXT} bars.")
+
+        self.check_tags_exists(tags)
+
 
         score_to_predict = score.copy()
         mask = np.asarray(mask)
@@ -134,6 +167,8 @@ class MusicLangAPI(MidiApiIntegration):
             temperature=temperature,
             async_mode=async_mode,
             polling_interval=polling_interval,
+            chords=chords,
+            tags=tags,
             **prediction_kwargs,
         )
         if async_mode:
@@ -162,6 +197,41 @@ class MusicLangAPI(MidiApiIntegration):
                 regen_missing_bars=regen_missing_bars,
             )
         return score
+
+
+    def extend(self, score, nb_bars,
+               model=models.MODEL_CONTROL_MASKING_LARGE,
+            timeout=120,
+            temperature=0.95,
+            cut_silenced_bars=False,
+            regen_missing_bars=False,
+            async_mode=False,
+            polling_interval=1,
+            **prediction_kwargs):
+
+        raise NotImplementedError('Currently not implemented, but soon, use `predict` instead')
+
+
+    def check_tags_exists(self, tags):
+        all_tags = set([el for track in tags for bar in track for el in bar])
+
+        if not AVAILABLE_TAGS.issuperset(all_tags):
+            tags_not_existing = all_tags - AVAILABLE_TAGS
+            raise ValueError(f'Unexisting tags have been used : {tags_not_existing} This is the list of available tags {AVAILABLE_TAGS}')
+
+
+
+    def create_transition(self, score1, score2, nb_bars_transition,
+                          model=models.MODEL_CONTROL_MASKING_LARGE,
+                          timeout=120,
+                          temperature=0.95,
+                          cut_silenced_bars=False,
+                          regen_missing_bars=False,
+                          async_mode=False,
+                          polling_interval=1,
+                          **prediction_kwargs,
+                          ):
+        raise NotImplementedError('Currently not implemented, but soon, use `predict` instead')
 
     def _call_polling_api(self, task_id):
         """
@@ -265,25 +335,31 @@ class MusicLangAPI(MidiApiIntegration):
         return None
 
     def _call_predict_api(
-            self, midi_base64, mask, model, temperature, **prediction_kwargs
+            self, midi_base64, mask, model, temperature, chords, tags, **prediction_kwargs
     ):
         """
+        Protected method that actually prepare the payload and call the API
 
         Parameters
         ----------
-        midi_base64 :
+        midi_base64 : str
+            Base64-encoded midi file
 
-        mask :
+        mask : np.Array
+            Array representing which bar of which track to regenerate
 
-        model :
+        model : str
+         Model in model list, check user guide.
 
-        temperature :
+        temperature : float
+            Temperature of the model, between 0 and 1.0
 
-        **prediction_kwargs :
-
+        **prediction_kwargs : dict
+            Other model arguments
 
         Returns
         -------
+            task_id : str
 
         """
         url = os.path.join(self.api_url, self.PREDICT_ASYNC_ENDPOINT)
@@ -293,6 +369,11 @@ class MusicLangAPI(MidiApiIntegration):
             "mask": mask.tolist(),
             "file": midi_base64,
         }
+        if tags is not None:
+            payload['tags'] = tags
+        if chords is not None:
+            payload['chords'] = chords
+
         payload.update(prediction_kwargs)
         headers = {"x-api-key": self.api_key}
         response = requests.post(url, json=payload, headers=headers)
@@ -307,6 +388,8 @@ class MusicLangAPI(MidiApiIntegration):
             temperature=0.95,
             async_mode=False,
             polling_interval=1,
+            chords=None,
+            tags=None,
             **prediction_kwargs,
     ):
         """
@@ -333,7 +416,7 @@ class MusicLangAPI(MidiApiIntegration):
         mask = np.asarray(mask)
         score.check_mask(mask)
         task_id = self._call_predict_api(
-            score.to_base64(), mask, model, temperature, **prediction_kwargs
+            score.to_base64(), mask, model, temperature, chords, tags, **prediction_kwargs
         )
         if async_mode:
             return task_id

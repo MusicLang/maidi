@@ -34,7 +34,7 @@ mask, tags, chords = score.get_empty_controls(prevent_silence=True)
 mask[:, :] = 1  # Regenerate everything in the score
 
 # Call the musiclang API to predict the score
-api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+api = MusicLangAPI(api_key=API_KEY, verbose=True)
 predicted_score = api.predict(score,
     mask, tags=tags, chords=chords, async_mode=False, polling_interval=3
 )

@@ -1,0 +1,6 @@
+.. _transitions:
+
+Generate transitions
+========================
+
+

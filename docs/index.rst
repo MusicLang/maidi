@@ -13,15 +13,22 @@ Welcome to M(AI)di's documentation.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Package:
+   :caption: Introduction:
 
    ./usage/about.rst
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Integrations:
+   :maxdepth: 4
+   :caption: MusicLang API:
 
    ./usage/integrations.rst
+
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Other integrations:
+
+   ./usage/other_integrations.rst
 
 
 .. toctree::

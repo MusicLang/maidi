@@ -5,8 +5,6 @@ About M(AI)DI
   :width: 400
   :alt: Maidi logo
 
-M(AI)DI
-=======
 
 M(ai)di is an open source python library that aims to highlight the capabilities and usefulness of the **Symbolic Music GenAI**.
 It interfaces with the best symbolic music AI models and APIs to **accelerate AI integration in music tech products**.
@@ -77,9 +75,9 @@ We welcome contributions to the project as long as it fits its main philosophy :
 - Manipulate midi files in some ways
 - Integrate with music AI models (inference & symbolic only)
 
-Please read :ref:`contributing` for details on our code of conduct, and the process for submitting pull requests to us.
+Please read :ref:`contributing` for details on our guidelines.
 
 License
-=======
+=========
 
-This project is licensed under the Apache License 2.0
+This package is licensed under the Apache License 2.0
