@@ -8,7 +8,7 @@ MusicLang is available on Pypi ::
 
 Or use this repo for the latest version ::
 
-    pip install git+https://github.com/MusicLang/maidi
+    pip install git+https://github.com/MusicLang/maidi.git
 
 
 

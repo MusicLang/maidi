@@ -36,8 +36,7 @@ pip install maidi
 Or to get the latest version from the repository, you can use:
 
 ```bash
-pip install git+github.com/MusicLang/maidi.git
-
+pip install git+https://github.com/MusicLang/maidi.git
 ```
 
 Usage
