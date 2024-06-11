@@ -4,7 +4,7 @@ MusicLang API
 ====================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    ./musiclang_api/general_usage
    ./musiclang_api/models
