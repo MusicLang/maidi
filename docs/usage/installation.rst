@@ -15,4 +15,4 @@ Or use this repo for the latest version ::
 
 You can run the tests with pytest locally ::
 
-    python -m pytest tests/
+    python -m pytest maidi/tests/
