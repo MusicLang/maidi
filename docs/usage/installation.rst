@@ -8,11 +8,11 @@ MusicLang is available on Pypi ::
 
 Or use this repo for the latest version ::
 
-    pip install git+https://github.com/MusicLang/maidi
+    pip install git+https://github.com/MusicLang/maidi.git
 
 
 
 
-You can run the tests with pytest ::
+You can run the tests with pytest locally ::
 
-    python -m pytest tests/
+    python -m pytest maidi/tests/
