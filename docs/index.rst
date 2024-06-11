@@ -21,7 +21,11 @@ Welcome to M(AI)di's documentation.
    :maxdepth: 4
    :caption: MusicLang API:
 
-   ./usage/integrations.rst
+   ./usage/musiclang_api/api_intro
+   ./usage/musiclang_api/models
+   ./usage/musiclang_api/chords
+   ./usage/musiclang_api/tags
+   ./usage/usiclang_api/transitions
 
 
 .. toctree::

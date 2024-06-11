@@ -1,16 +1,7 @@
-.. _integrations:
+.. _general_usage:
 
-MusicLang API
+Introduction
 ====================
-
-.. toctree::
-   :maxdepth: 1
-
-   ./musiclang_api/general_usage
-   ./musiclang_api/models
-   ./musiclang_api/chords
-   ./musiclang_api/tags
-   ./musiclang_api/transitions
 
 
 MusicLang is your **co-pilot for music composition**.
@@ -24,9 +15,6 @@ Learn more about musiclang `here <https://www.musiclang.io>`_.
 
 Documentation
 --------------------------
-
-
-:ref:`general_usage`
 
 
 :ref:`models`
@@ -48,12 +36,14 @@ While this package provides a simple interface to the MusicLang API, you can als
 
 `Read more here <http://api.musiclang.io/documentation>`_
 
-Some examples
---------------
+
+Examples
+----------
 
 
+Here are some basic example on how you can use MusicLang API to leverage the power of the musiclang model.
 
-**A simple example: Generate a 4 bar score** with the musiclang masking model API.
+**1. Generate a 4 bar score** with the musiclang masking model API.
 Just set your API_URL and API_KEY in the environment (or get one `here <https://www.musiclang.io>`_) and run the following code ::
 
     from maidi import MidiScore
@@ -87,7 +77,7 @@ Just set your API_URL and API_KEY in the environment (or get one `here <https://
     predicted_score.write("predicted_score.mid")
 
 
-**Generate a new track in a score** : Start from a midi file and add a track ::
+**2. Generate a new track in a score** : Start from a midi file and add a track ::
 
 
     import os
@@ -113,7 +103,7 @@ Just set your API_URL and API_KEY in the environment (or get one `here <https://
     predicted_score.write("predicted_score.mid")
 
 
-**Generate a track that has the same characteristics as an existing midi files** : Start from a midi file and generate a new track with the same characteristics. ::
+**3. Generate a song that has the same characteristics as an existing midi files** : Start from a midi file and generate a new track with the same characteristics. ::
 
     import os
     from maidi import MidiScore, ScoreTagger, midi_library
@@ -151,8 +141,4 @@ Just set your API_URL and API_KEY in the environment (or get one `here <https://
 
 For more details on the API, please refer to the `MusicLang API documentation <https://api.musiclang.io/documentation>`_ .
 
-
-With other tools and APIs
--------------------------
-
-See :ref:`contributing` for more details.
+:ref:`back to top <integrations>`
