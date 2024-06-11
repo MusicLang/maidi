@@ -5,21 +5,21 @@ About M(AI)DI
   :width: 400
   :alt: Maidi logo
 
+M(ai)di is an open-source Python library designed to showcase the capabilities and usefulness of **Symbolic Music GenAI**. 
+It interfaces with top symbolic music AI models and APIs to **accelerate AI integration in music tech products**. 
+The project originated from the realization that artists need to manipulate MIDI, not just audio, in their composition workflows, and that tools in this area are lacking.
+Thus, we present a simple and efficient way to manipulate MIDI files and integrate with music AI models. With just a few lines of code, you can parse, analyze, and generate MIDI files using the best music AI models available.
 
-M(ai)di is an open source python library that aims to highlight the capabilities and usefulness of the **Symbolic Music GenAI**.
-It interfaces with the best symbolic music AI models and APIs to **accelerate AI integration in music tech products**.
-It came from the realization that artists need to manipulate MIDI and not only audio in their composition workflow but tools are lacking in this area.
-
-So here we are, providing a simple and efficient way to manipulate midi files and integrate with music AI models.
-In a few lines of code you will be able to parse, analyze and generate midi files with the best music AI models available.
 
 **Here is where M(ai)di shines:**
 
-- **Midi Files Manipulation**: Load, save, edit, merge and analyze midi files with ease.
-- **Music AI Models Integration**: Integrate with the best music AI models and APIs to generate music.
-- **Automatic MIDI tagging**: Get the chords, tempo, time signature, and many other musical features for each bar/instrument of the midi file.
+- **MIDI Files Manipulation**: Load, save, edit, merge, and analyze MIDI files with ease.
 
-*Disclaimer : We really focus on processing midi files and model inference calls. We don't implement audio features, neither model training, neither tokenization.*
+- **Music AI Models Integration**: Integrate with the best music AI models and APIs to generate music.
+
+- **Automatic MIDI Tagging**: Get the chords, tempo, time signature, and many other musical features for each bar/instrument of the MIDI file.
+
+*Disclaimer: We focus on processing MIDI files and model inference calls. We do not implement audio features, model training, or tokenization.*
 
 Getting Started
 ===============
