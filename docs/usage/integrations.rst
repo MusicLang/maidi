@@ -3,6 +3,16 @@
 MusicLang API
 ====================
 
+.. toctree::
+   :maxdepth: 2
+
+   ./musiclang_api/general_usage
+   ./musiclang_api/models
+   ./musiclang_api/chords
+   ./musiclang_api/tags
+   ./musiclang_api/transitions
+
+
 MusicLang is your **co-pilot for music composition**.
 
 Based on generative AI technology and trained on CC0 midi music data.
