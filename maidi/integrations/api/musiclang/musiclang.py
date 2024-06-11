@@ -153,7 +153,8 @@ class MusicLangAPI(MidiApiIntegration):
         if score.nb_bars > MusicLangAPI.MAX_CONTEXT:
             raise ValueError(f"The prompted score must be less than {MusicLangAPI.MAX_CONTEXT} bars.")
 
-        self.check_tags_exists(tags)
+        if tags is not None:
+            self.check_tags_exists(tags)
 
 
         score_to_predict = score.copy()
