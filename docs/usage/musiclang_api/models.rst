@@ -6,13 +6,13 @@ List of models
 
 You can use several models in integration with the API. Here is a list of current available models :
 
-**control_masking_large** : Latest model, with best performances masking model, can use `mask`, `tags` and `chords` arguments
+* **control_masking_large** : Latest model, with best performances masking model, can use `mask`, `tags` and `chords` arguments
 
-**masking_large** : Older masking model with good performances, can use `mask` argument but not `tags` and `chords`
+* **masking_large** : Older masking model with good performances, can use `mask` argument but not `tags` and `chords`
 
-**masking_small** : Smaller masking model with lower performances but cheaper and faster, can use `mask` argument but not `tags` and `chords`
+* **masking_small** : Smaller masking model with lower performances but cheaper and faster, can use `mask` argument but not `tags` and `chords`
 
-*Please note that all our models are limited to a 16 bars context*
+*Please note that all our models are limited to a 16-bar context for performance purposes in these examples.*
 
 
 Usage
