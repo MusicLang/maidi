@@ -3,10 +3,12 @@ import time
 import os
 import requests
 import tempfile
+import warnings
 from maidi.integrations.base import MidiApiIntegration
 from maidi.integrations.api.musiclang import models
 from maidi import MidiScore
 from maidi import constants
+
 
 # Enum of models
 
@@ -223,17 +225,128 @@ class MusicLangAPI(MidiApiIntegration):
                 tags = [([[]] * offset) + track for track in tags]
         return chords, tags
 
+    def create_transition(self, score1, score2, nb_bars_transition,
+                          model=models.MODEL_CONTROL_MASKING_LARGE,
+                          return_all=True,
+                          chords=None,
+                          tags=None,
+                          timeout=120,
+                          temperature=0.95,
+                          async_mode=False,
+                          polling_interval=1,
+                          **prediction_kwargs):
+        """
+        Create a transition between two scores using the MusicLang API.
+
+        Parameters
+        ----------
+        score1 : MidiScore
+            The initial score from which to transition.
+        score2 : MidiScore
+            The final score to transition to.
+        nb_bars_transition : int
+            The number of bars to use for the transition.
+        model : str, optional
+            The model to use for the transition (default is "control_masking_large").
+        return_all : bool, optional
+            If True, return the full concatenated score with transition, otherwise only the transition part (default is True).
+        chords : list[tuple or None], optional
+            List of chord tuples to guide the transition.
+        tags : list[list[list]], optional
+            Tags to guide the transition, provided as a list of lists for each track and bar.
+        timeout : int, optional
+            Timeout for the API call (default is 120 seconds).
+        temperature : float, optional
+            Temperature parameter for the model (default is 0.95).
+        async_mode : bool, optional
+            If True, return the task id, otherwise wait for the request to finish with polling (default is False).
+        polling_interval : int, optional
+            Interval in seconds to poll the API for completion (default is 1 second).
+
+        Returns
+        -------
+        MidiScore
+            The score with the transition bars added, or only the transition part based on the return_all parameter.
+
+        Raises
+        ------
+        ValueError
+            If the model is not recognized or if the input parameters are invalid.
+        """
+
+        self._validate_transition_params(score1, score2, nb_bars_transition)
+
+        nb_bars_score1, nb_bars_score2 = self._calculate_bars_to_take(score1, score2, nb_bars_transition)
+
+        transition_segment = self._create_transition_segment(score1, score2, nb_bars_score1, nb_bars_transition,
+                                                             nb_bars_score2)
+        mask = self._create_transition_mask(score1.nb_tracks, transition_segment.nb_bars, nb_bars_score1,
+                                            nb_bars_transition)
+        transition_chords, transition_tags = self._adjust_chords_and_tags(chords, tags)
+
+        transition_result = self.predict(
+            transition_segment,
+            mask,
+            model=model,
+            timeout=timeout,
+            temperature=temperature,
+            async_mode=async_mode,
+            polling_interval=polling_interval,
+            chords=transition_chords,
+            tags=transition_tags,
+            **prediction_kwargs
+        )
+
+        if async_mode:
+            return transition_result  # Return the task id
+
+        return self._concatenate_transition_results(score1, transition_result, score2, nb_bars_score1,
+                                                    nb_bars_transition, nb_bars_score2, return_all)
+
+    def _validate_transition_params(self, score1, score2, nb_bars_transition):
+        if score1.nb_tracks != score2.nb_tracks:
+            raise ValueError('The number of tracks in score1 and score2 must be the same')
+        if score1.instruments != score2.instruments:
+            warnings.warn(
+                'Instruments are different in the two scores, interpreting score2 instruments as score1 instruments')
+
+        if nb_bars_transition > self.MAX_CONTEXT - 4:
+            raise ValueError(f"Transition size must be less than {self.MAX_CONTEXT - 4} bars")
+
+    def _calculate_bars_to_take(self, score1, score2, nb_bars_transition):
+        nb_bars_score1 = min((self.MAX_CONTEXT - nb_bars_transition) // 2, score1.nb_bars)
+        nb_bars_score2 = min(self.MAX_CONTEXT - nb_bars_transition - nb_bars_score1, score2.nb_bars)
+        return nb_bars_score1, nb_bars_score2
+
+    def _create_transition_segment(self, score1, score2, nb_bars_score1, nb_bars_transition, nb_bars_score2):
+        return score1[:, -nb_bars_score1:].add_silence_bars(nb_bars_transition).concatenate(score2[:, :nb_bars_score2],axis=1)
+
+    def _create_transition_mask(self, nb_tracks, nb_bars, nb_bars_score1, nb_bars_transition):
+        mask = np.zeros((nb_tracks, nb_bars))
+        mask[:, nb_bars_score1:nb_bars_score1 + nb_bars_transition] = 1
+        return mask
+
+    def _adjust_chords_and_tags(self, chords, tags):
+        return chords, tags
+
+    def _concatenate_transition_results(self, score1, transition_result, score2, nb_bars_score1, nb_bars_transition,
+                                        nb_bars_score2, return_all):
+        if return_all:
+            final_score = score1[:, :-nb_bars_score1].concatenate(transition_result, axis=1).concatenate(
+                score2[:, nb_bars_score2:], axis=1)
+        else:
+            final_score = transition_result[:, nb_bars_score1:nb_bars_score1 + nb_bars_transition]
+        return final_score
+
     def extend(self, score, nb_bars_added,
                model=models.MODEL_CONTROL_MASKING_LARGE,
                nb_added_bars_step=None,
-               tags=None,
                chords=None,
-            timeout=120,
-            temperature=0.95,
-            cut_silenced_bars=False,
-            regen_missing_bars=False,
-            polling_interval=1,
-            **prediction_kwargs):
+               tags=None,
+               timeout=120,
+               temperature=0.95,
+               polling_interval=1,
+               **prediction_kwargs):
         """
         Extend the given score by a specified number of bars using the MusicLang API.
 
@@ -247,22 +360,18 @@ class MusicLangAPI(MidiApiIntegration):
             The model to use for the extension (default is "control_masking_large").
         nb_added_bars_step : int, optional
             Number of bars to add in each step (if None, the extension will use the maximum context size).
-        tags : list[list[list]], optional
-            Tags to guide the extension, provided as a list of lists for each track and bar.
         chords : list[tuple or None], optional
             List of chord tuples to guide the extension.
+        tags : list[list[list]], optional
+            Tags to guide the extension, provided as a list of lists for each track and bar.
         timeout : int, optional
             Timeout for the API call (default is 120 seconds).
         temperature : float, optional
             Temperature parameter for the model (default is 0.95).
-        cut_silenced_bars : bool, optional
-            If True, cut silenced bars at the beginning and end (default is False).
-        regen_missing_bars : bool, optional
-            If True, regenerate missing bars with another API call (default is False).
         polling_interval : int, optional
             Interval in seconds to poll the API for completion (default is 1 second).
         **prediction_kwargs : dict
-            Additional arguments for the model (such as specific tags or chords).
+            Additional arguments for the model
 
         Returns
         -------
@@ -278,38 +387,48 @@ class MusicLangAPI(MidiApiIntegration):
         new_score = score.copy()
         nb_bars_current = new_score.nb_bars
         offset_bar = 0
+
         while new_score.nb_bars < (nb_bars_current + nb_bars_added):
             remaining_bars = (nb_bars_current + nb_bars_added) - new_score.nb_bars
-            if nb_added_bars_step is not None:
-                nb_added_bars_in_this_step = min(remaining_bars, nb_added_bars_step)
-            else:
-                nb_added_bars_in_this_step = min(self.MAX_CONTEXT, remaining_bars)
-
+            nb_added_bars_in_this_step = self._determine_bars_step(nb_added_bars_step, remaining_bars)
             new_score = new_score.add_silence_bars(nb_added_bars_in_this_step, add_fake_notes=True)
             predicted_score = new_score[:, -self.MAX_CONTEXT:]
-            nb_bars_predicted = predicted_score.nb_bars
-            base_score = new_score[:, :-nb_bars_predicted]
+            base_score = new_score[:, :-predicted_score.nb_bars]
 
-            mask = predicted_score.get_mask()
-            mask[:, -nb_added_bars_in_this_step:] = 1
-            nb_bars_context_this_step = mask.shape[1] - nb_added_bars_in_this_step
+            mask = self._create_mask(predicted_score, nb_added_bars_in_this_step)
             subchords, subtags = self._get_subchords_and_subtags(chords, tags, offset_bar,
-                                                                 offset_bar+nb_added_bars_in_this_step, nb_bars_context_this_step)
+                                                                 offset_bar+nb_added_bars_in_this_step,
+                                                                 mask.shape[1] - nb_added_bars_in_this_step)
 
             offset_bar += nb_added_bars_in_this_step
-            print(nb_added_bars_in_this_step)
-            print(mask)
-            result_predicted_score = self.predict(predicted_score,
-                                                  mask,
-                                                  tags=subtags,
-                                                  chords=subchords,
-                                                  temperature=temperature,
-                                                  polling_interval=polling_interval,
-                                                  prediction_kwargs=prediction_kwargs
-            )
+            result_predicted_score = self._predict_segment(predicted_score, mask, model, subtags, subchords,
+                                                           temperature, polling_interval, timeout, prediction_kwargs)
             new_score = base_score.concatenate(result_predicted_score, axis=1)
 
         return new_score
+
+    def _determine_bars_step(self, nb_added_bars_step, remaining_bars):
+        if nb_added_bars_step is not None:
+            return min(remaining_bars, nb_added_bars_step)
+        else:
+            return min(self.MAX_CONTEXT, remaining_bars)
+
+    def _create_mask(self, predicted_score, nb_added_bars_in_this_step):
+        mask = predicted_score.get_mask()
+        mask[:, -nb_added_bars_in_this_step:] = 1
+        return mask
+
+    def _predict_segment(self, predicted_score, mask, model, subtags, subchords,
+                         temperature, polling_interval, timeout, prediction_kwargs):
+        return self.predict(predicted_score,
+                            mask,
+                            tags=subtags,
+                            model=model,
+                            chords=subchords,
+                            temperature=temperature,
+                            polling_interval=polling_interval,
+                            timeout=timeout,
+                            prediction_kwargs=prediction_kwargs)
 
 
 
@@ -341,17 +460,6 @@ class MusicLangAPI(MidiApiIntegration):
                 check_chord_exist(chord, index_chord=idx)
 
 
-    def create_transition(self, score1, score2, nb_bars_transition,
-                          model=models.MODEL_CONTROL_MASKING_LARGE,
-                          timeout=120,
-                          temperature=0.95,
-                          cut_silenced_bars=False,
-                          regen_missing_bars=False,
-                          async_mode=False,
-                          polling_interval=1,
-                          **prediction_kwargs,
-                          ):
-        raise NotImplementedError('Currently not implemented, but soon, use `predict` instead')
 
     def _call_polling_api(self, task_id):
         """

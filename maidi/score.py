@@ -191,6 +191,10 @@ class MidiScore:
 
         # Check shapes are compatible
         if axis == 0:
+            if self.nb_tracks == 0:
+                return other_score.copy()
+            if other_score.nb_tracks == 0:
+                return self.copy()
             if self.nb_bars != other_score.nb_bars:
                 raise ValueError("The number of bars must be the same for axis 0 concatenation")
             new_score = self.copy()
@@ -202,7 +206,9 @@ class MidiScore:
 
         if axis == 1:
             if self.nb_bars == 0:
-                return other_score
+                return other_score.copy()
+            if other_score.nb_bars == 0:
+                return self.copy()
 
             right_bars = deepcopy(other_score.bars)
             if self.nb_tracks != other_score.nb_tracks:
@@ -1186,6 +1192,11 @@ class MidiScore:
         return MidiScore(
             new_bars, new_tracks, score.track_keys, score.tempo, score.tpq
         )
+
+    @property
+    def instruments(self):
+        from maidi.constants import REVERSE_INSTRUMENT_DICT
+        return [REVERSE_INSTRUMENT_DICT[(track_key[1], track_key[2])] for track_key in self.track_keys]
 
     @classmethod
     def from_empty(cls, instruments, nb_bars, ts=(4, 4), tempo=120, tpq=24):
