@@ -20,23 +20,6 @@ You'll need to have an API_KEY `here <www.musiclang.io>`_ and set your environme
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="In this example : - We load an existing song - We ask musiclang to continue it for 4 bars">
-
-.. only:: html
-
-  .. image:: /auto_examples/musiclang_api/images/thumb/sphx_glr_07_continue_song_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_examples_musiclang_api_07_continue_song.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">Extend an existing sample or song</div>
-    </div>
-
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="In this example : - We load a 4 bar template from a midi file (drum and bass - We regenerate on...">
 
 .. only:: html
@@ -154,6 +137,23 @@ You'll need to have an API_KEY `here <www.musiclang.io>`_ and set your environme
     </div>
 
 
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="In this example : - We load an existing song - We ask musiclang to continue it for 4 bars">
+
+.. only:: html
+
+  .. image:: /auto_examples/musiclang_api/images/thumb/sphx_glr_07_continue_song_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_musiclang_api_07_continue_song.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Extend an existing sample or song</div>
+    </div>
+
+
 .. thumbnail-parent-div-close
 
 .. raw:: html
@@ -164,7 +164,6 @@ You'll need to have an API_KEY `here <www.musiclang.io>`_ and set your environme
 .. toctree::
    :hidden:
 
-   /auto_examples/musiclang_api/07_continue_song
    /auto_examples/musiclang_api/04_regenerate_some_bars
    /auto_examples/musiclang_api/01_add_guitar_track
    /auto_examples/musiclang_api/08_create_transition_between_parts
@@ -172,4 +171,5 @@ You'll need to have an API_KEY `here <www.musiclang.io>`_ and set your environme
    /auto_examples/musiclang_api/06_control_the_tracks
    /auto_examples/musiclang_api/05_control_chord_progression
    /auto_examples/musiclang_api/03_generate_async
+   /auto_examples/musiclang_api/07_continue_song
 

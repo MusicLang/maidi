@@ -16,7 +16,6 @@ Learn more about musiclang `here <https://www.musiclang.io>`_.
 Documentation
 --------------------------
 
-
 :ref:`models`
 
 
@@ -25,6 +24,7 @@ Documentation
 
 :ref:`tags`
 
+:ref:`extensions`
 
 :ref:`transitions`
 

@@ -234,6 +234,46 @@ class MusicLangAPI(MidiApiIntegration):
             regen_missing_bars=False,
             polling_interval=1,
             **prediction_kwargs):
+        """
+        Extend the given score by a specified number of bars using the MusicLang API.
+
+        Parameters
+        ----------
+        score : MidiScore
+            The initial score to extend.
+        nb_bars_added : int
+            The number of bars to add to the score.
+        model : str, optional
+            The model to use for the extension (default is "control_masking_large").
+        nb_added_bars_step : int, optional
+            Number of bars to add in each step (if None, the extension will use the maximum context size).
+        tags : list[list[list]], optional
+            Tags to guide the extension, provided as a list of lists for each track and bar.
+        chords : list[tuple or None], optional
+            List of chord tuples to guide the extension.
+        timeout : int, optional
+            Timeout for the API call (default is 120 seconds).
+        temperature : float, optional
+            Temperature parameter for the model (default is 0.95).
+        cut_silenced_bars : bool, optional
+            If True, cut silenced bars at the beginning and end (default is False).
+        regen_missing_bars : bool, optional
+            If True, regenerate missing bars with another API call (default is False).
+        polling_interval : int, optional
+            Interval in seconds to poll the API for completion (default is 1 second).
+        **prediction_kwargs : dict
+            Additional arguments for the model (such as specific tags or chords).
+
+        Returns
+        -------
+        MidiScore
+            The extended score with the specified number of additional bars.
+
+        Raises
+        ------
+        ValueError
+            If the model is not recognized or if the input parameters are invalid.
+        """
 
         new_score = score.copy()
         nb_bars_current = new_score.nb_bars
