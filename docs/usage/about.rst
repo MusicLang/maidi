@@ -81,3 +81,9 @@ License
 =========
 
 This package is licensed under the Apache License 2.0
+
+Github
+=========
+
+You are looking for the github page of the project ?
+`Here is the link ! <https://github.com/MusicLang/maidi>`_
