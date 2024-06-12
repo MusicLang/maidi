@@ -40,5 +40,19 @@ _43 = '43'
 _2 = '2'
 _sus2 = '(sus2)'
 _sus4 = '(sus4)'
+ALL_EXTENSIONS = set([_root_position, _6, _64, _7, _65, _43, _2])
+SPECIAL_EXTENSIONS = set([_sus4, _sus2])
+
+
+def is_valid_extension(extension):
+    corr_extension = extension.replace(_sus2, '').replace(_sus4, '')
+    if extension in SPECIAL_EXTENSIONS:
+        return True
+
+    for ext in SPECIAL_EXTENSIONS:
+        if extension.startswith(ext):
+            return False
+
+    return corr_extension in ALL_EXTENSIONS
 
 

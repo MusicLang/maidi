@@ -154,8 +154,19 @@ class MusicLangAPI(MidiApiIntegration):
             raise ValueError(f"The prompted score must be less than {MusicLangAPI.MAX_CONTEXT} bars.")
 
         if tags is not None:
-            self.check_tags_exists(tags)
+            self._check_tags_exists(tags)
 
+        if score.nb_bars != mask.shape[1]:
+            raise ValueError(f'Wrong number of bars in the mask, (score) : {score.nb_bars} (mask): {mask.shape[1]}')
+
+        if score.nb_tracks != mask.shape[0]:
+            raise ValueError(f'Wrong number of tracks in the mask, (score) : {score.nb_tracks} (mask): {mask.shape[0]}')
+
+        if chords is not None:
+            self._check_chords_exists(chords)
+
+        if chords is not None and (len(chords) != score.nb_bars):
+            raise ValueError(f'Wrong number of chords (chords) :{len(chords)} (score) : {score.nb_bars}')
 
         score_to_predict = score.copy()
         mask = np.asarray(mask)
@@ -200,26 +211,94 @@ class MusicLangAPI(MidiApiIntegration):
         return score
 
 
-    def extend(self, score, nb_bars,
+    def _get_subchords_and_subtags(self, chords, tags, index_start, index_end, offset=None):
+        chords = chords[index_start:index_end] if chords is not None else None
+        if tags is not None:
+            tags = [[bar for bar in track[index_start:index_end]] for track in tags]
+
+        if offset is not None:
+            if chords is not None:
+                chords = ([None] * offset) + chords
+            if tags is not None:
+                tags = [([[]] * offset) + track for track in tags]
+        return chords, tags
+
+    def extend(self, score, nb_bars_added,
                model=models.MODEL_CONTROL_MASKING_LARGE,
+               nb_added_bars_step=None,
+               tags=None,
+               chords=None,
             timeout=120,
             temperature=0.95,
             cut_silenced_bars=False,
             regen_missing_bars=False,
-            async_mode=False,
             polling_interval=1,
             **prediction_kwargs):
 
-        raise NotImplementedError('Currently not implemented, but soon, use `predict` instead')
+        new_score = score.copy()
+        nb_bars_current = new_score.nb_bars
+        offset_bar = 0
+        while new_score.nb_bars < (nb_bars_current + nb_bars_added):
+            remaining_bars = (nb_bars_current + nb_bars_added) - new_score.nb_bars
+            if nb_added_bars_step is not None:
+                nb_added_bars_in_this_step = min(remaining_bars, nb_added_bars_step)
+            else:
+                nb_added_bars_in_this_step = min(self.MAX_CONTEXT, remaining_bars)
+
+            new_score = new_score.add_silence_bars(nb_added_bars_in_this_step, add_fake_notes=True)
+            predicted_score = new_score[:, -self.MAX_CONTEXT:]
+            nb_bars_predicted = predicted_score.nb_bars
+            base_score = new_score[:, :-nb_bars_predicted]
+
+            mask = predicted_score.get_mask()
+            mask[:, -nb_added_bars_in_this_step:] = 1
+            nb_bars_context_this_step = mask.shape[1] - nb_added_bars_in_this_step
+            subchords, subtags = self._get_subchords_and_subtags(chords, tags, offset_bar,
+                                                                 offset_bar+nb_added_bars_in_this_step, nb_bars_context_this_step)
+
+            offset_bar += nb_added_bars_in_this_step
+            print(nb_added_bars_in_this_step)
+            print(mask)
+            result_predicted_score = self.predict(predicted_score,
+                                                  mask,
+                                                  tags=subtags,
+                                                  chords=subchords,
+                                                  temperature=temperature,
+                                                  polling_interval=polling_interval,
+                                                  prediction_kwargs=prediction_kwargs
+            )
+            new_score = base_score.concatenate(result_predicted_score, axis=1)
+
+        return new_score
 
 
-    def check_tags_exists(self, tags):
+
+
+    def _check_tags_exists(self, tags):
         all_tags = set([el for track in tags for bar in track for el in bar])
 
         if not AVAILABLE_TAGS.issuperset(all_tags):
             tags_not_existing = all_tags - AVAILABLE_TAGS
             raise ValueError(f'Unexisting tags have been used : {tags_not_existing} This is the list of available tags {AVAILABLE_TAGS}')
 
+    def _check_chords_exists(self, chords):
+        from maidi.chords_symbols import is_valid_extension, ALL_EXTENSIONS
+        def check_chord_exist(chord, index_chord):
+            deg, tone, mode, extension = chord
+            if not isinstance(deg, int) or deg < 0 or deg > 6:
+                raise ValueError(f'Chord degree is wrong : {deg}. It should be an integer between 0 and 6 included')
+            if not isinstance(tone, int) or tone < 0 or tone > 11:
+                raise ValueError(f'Chord degree is wrong : {tone}. It should be an integer between 0 and 11 included')
+            if not (mode in ['m', 'M']):
+                raise ValueError(f'Scale mode is wrong, it should be either "m" (minor mode) or "M" (major mode)')
+            if not is_valid_extension(extension):
+                raise ValueError(f'Wrong extension : {extension}, must be in {ALL_EXTENSIONS} with optionally added "(sus2)" or "(sus4)"')
+
+        if chords is None:
+            return
+        for idx, chord in enumerate(chords):
+            if chord is not None:
+                check_chord_exist(chord, index_chord=idx)
 
 
     def create_transition(self, score1, score2, nb_bars_transition,

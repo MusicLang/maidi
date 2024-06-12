@@ -188,6 +188,7 @@ class MidiScore:
             The axis along which to concatenate (0 = horizontally, 1 = vertically)
 
         """
+
         # Check shapes are compatible
         if axis == 0:
             if self.nb_bars != other_score.nb_bars:
@@ -200,6 +201,9 @@ class MidiScore:
             return new_score
 
         if axis == 1:
+            if self.nb_bars == 0:
+                return other_score
+
             right_bars = deepcopy(other_score.bars)
             if self.nb_tracks != other_score.nb_tracks:
                 raise ValueError("The number of tracks must be the same for axis 1 concatenation")
