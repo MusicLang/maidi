@@ -61,6 +61,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools bump2version
 
+    - name: Configure Git
+      run: |
+        git config --global user.email "you@example.com"
+        git config --global user.name "GARDIN Florian"
+
     - name: Bump version
       run: |
         current_version=$(python setup.py --version)
