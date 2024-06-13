@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'M(AI)DI'
 copyright = '2024, GARDIN Florian, ZATAR Mehdi'
 author = 'GARDIN Florian, ZATAR Mehdi'
-release = '0.12.10'
+release = '0.12.11'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
