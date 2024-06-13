@@ -67,7 +67,8 @@ jobs:
 
     - name: Bump version
       run: |
-        bump2version --new-version ${{ steps.extract_version.outputs.tag }} --allow-dirty --tag
+        current_version=$(python setup.py --version)
+        bump2version --current-version $current_version --new-version ${{ steps.extract_version.outputs.tag }} --allow-dirty --tag --commit
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
