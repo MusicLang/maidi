@@ -22,9 +22,11 @@ Welcome to M(AI)di's documentation.
    :caption: MusicLang API:
 
    ./usage/musiclang_api/api_intro
+   ./usage/musiclang_api/from_scratch
    ./usage/musiclang_api/models
    ./usage/musiclang_api/chords
    ./usage/musiclang_api/tags
+   ./usage/musiclang_api/song_extension
    ./usage/musiclang_api/transitions
 
 
