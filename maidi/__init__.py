@@ -3,4 +3,4 @@ from .constants import *
 from .score import MidiScore
 from .analysis import TagsProvider, ScoreTagger
 
-__version__ = "0.12.1"
+__version__ = "0.12.2"
