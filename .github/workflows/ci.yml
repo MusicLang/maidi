@@ -46,6 +46,7 @@ jobs:
 
   bumpversion:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -64,6 +65,12 @@ jobs:
       run: |
         current_version=$(python setup.py --version)
         bump2version --current-version $current_version --allow-dirty --tag --commit patch
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push changes
+      run: |
+        git push origin HEAD --tags
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
