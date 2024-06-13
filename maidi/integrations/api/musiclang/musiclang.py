@@ -126,6 +126,52 @@ class MusicLangAPI(MidiApiIntegration):
             print(*args, **kwargs)
 
 
+    def generate_from_scratch(self, instruments, nb_bars, ts, tempo, model=models.MODEL_CONTROL_MASKING_LARGE, chords=None, tags=None, temperature=0.95,
+                              **kwargs):
+        """Generate a score from scratch with the given parameters
+
+        Parameters
+        ----------
+        instruments : list[str]
+            List of instruments to use
+        nb_bars : int
+            Number of bars
+        ts : tuple
+            Time signature
+        tempo : int
+            Tempo
+        model : str
+            Model to use (Default value = models.MODEL_CONTROL_MASKING_LARGE)
+        chords : list[tuple or None]
+            List of chord tuples to guide the generation
+        tags : list[list[list]] or None
+            Tags to guide the generation
+        temperature : float
+            Temperature for the model (Default value = 0.95)
+        **kwargs :
+            Additional arguments for the model to pass to the `predict` method
+
+        **Usage**
+
+        >>> import numpy as np
+        >>> from maidi import MidiScore, instrument
+        >>> from maidi.integrations.api import MusicLangAPI
+        >>> from maidi.integrations.api.musiclang import models
+        >>> api = MusicLangAPI(API_URL, API_KEY)
+        >>> score = api.generate_from_scratch(instruments=[instrument.ELECTRIC_PIANO, instrument.ALTO_SAX], nb_bars=4, ts=(4, 4), tempo=120, model=models.MODEL_CONTROL_MASKING_LARGE, temperature=0.95)
+        >>> score.write("generated_score.mid")
+        """
+        score = MidiScore.from_empty(instruments=instruments, nb_bars=nb_bars, ts=ts, tempo=tempo)
+        mask, new_tags, new_chords = score.get_empty_controls(prevent_silence=False)
+        if tags is None:
+            tags = new_tags
+        if chords is None:
+            chords = new_chords
+
+        mask[:, :] = 1
+
+        return self.predict(score, mask, model=model, temperature=temperature, chords=chords, tags=tags, **kwargs)
+
     def predict(
             self,
             score,

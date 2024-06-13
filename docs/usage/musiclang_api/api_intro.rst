@@ -17,6 +17,8 @@ Documentation
 
 :ref:`models`
 
+:ref:`from_scratch`
+
 :ref:`chords`
 
 :ref:`tags`

@@ -51,6 +51,11 @@ def test_invalid_mask_dimension(setup_api, setup_score):
         api.predict(score, mask)
     assert "Wrong number of bars in the mask" in str(excinfo.value)
 
+    mask = np.zeros((1, 4))  # Mask should not have only 0
+    with pytest.raises(ValueError) as excinfo:
+        api.predict(score, mask)
+    assert "Mask must have at least one 1" in str(excinfo.value)
+
 def test_invalid_chords(setup_api, setup_score):
     api = setup_api
     score = setup_score

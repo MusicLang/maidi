@@ -769,7 +769,7 @@ class MidiScore:
 
         return mask
 
-    def get_empty_controls(self, prevent_silence=False):
+    def get_empty_controls(self, prevent_silence=True):
         """Get the mask, the tags and the bars of the current score.
         The mask is a np.array of shape (n_tracks, n_bars)
         The tags is a list of list of list of size (n_tracks, n_bars, <variable size>)
@@ -787,8 +787,8 @@ class MidiScore:
         mask = self.get_mask()
         tags = [[[] for _ in range(mask.shape[1])] for _ in range(mask.shape[0])]
         tags = self.prevent_silence_tags(tags) if prevent_silence else tags
-        bars = [None for _ in range(mask.shape[1])]
-        return mask, tags, bars
+        chords = [None for _ in range(mask.shape[1])]
+        return mask, tags, chords
 
     @classmethod
     def prevent_silence_tags(self, tags):
@@ -916,6 +916,8 @@ class MidiScore:
             raise ValueError(
                 "Mask number of tracks does not match score number of tracks"
             )
+        if np.sum(mask) == 0:
+            raise ValueError("Mask must have at least one 1")
 
     def check_times(self):
         """ """

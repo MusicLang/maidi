@@ -3,9 +3,7 @@ Create a drum'n'bass sample
 ==================================================
 
 In this example :
-- We create an empty score with 4 bars and drums and bass instruments
-- We set the mask to regenerate everything
-- We call the musiclang API to generate the score
+- We directly generate a drum'n'bass sample from scratch using the `generate_from_scratch` method of the MusicLang API
 - We save the predicted score to a midi file
 
 """
@@ -16,26 +14,13 @@ from maidi.integrations.api import MusicLangAPI
 import os
 
 # Assuming API_URL and API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
-API_KEY = os.getenv("API_KEY")
-
-# Your choice of params for generation here
-instruments = [
-    instrument.DRUMS,
-    instrument.ELECTRIC_BASS_FINGER,
-]
-
-# Create a 4 bar template with the given instruments
-score = MidiScore.from_empty(
-    instruments=instruments, nb_bars=4, ts=(4, 4), tempo=120
-)
-# Get the controls (the prompt) for this score
-mask, tags, chords = score.get_empty_controls(prevent_silence=True)
-mask[:, :] = 1  # Regenerate everything in the score
-
 # Call the musiclang API to predict the score
-api = MusicLangAPI(api_key=API_KEY, verbose=True)
-predicted_score = api.predict(score,
-    mask, tags=tags, chords=chords, async_mode=False, polling_interval=3
-)
+api = MusicLangAPI(api_key=os.getenv("API_KEY"), verbose=True)
+
+instruments = [instrument.DRUMS, instrument.ELECTRIC_BASS_FINGER]
+nb_bars = 4
+time_signature = (4, 4)
+tempo = 120
+
+predicted_score = api.generate_from_scratch(instruments=instruments, nb_bars=nb_bars, ts=time_signature, tempo=tempo)
 predicted_score.write("predicted_score.mid")
