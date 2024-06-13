@@ -7,3 +7,5 @@ sphinx_gallery
 numpydoc
 furo
 pytest-cov
+sphinx_copybutton
+bump2version

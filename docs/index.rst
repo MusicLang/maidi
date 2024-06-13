@@ -25,7 +25,7 @@ Welcome to M(AI)di's documentation.
    ./usage/musiclang_api/models
    ./usage/musiclang_api/chords
    ./usage/musiclang_api/tags
-   ./usage/usiclang_api/transitions
+   ./usage/musiclang_api/transitions
 
 
 .. toctree::

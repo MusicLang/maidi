@@ -1,3 +1,7 @@
+<a href="https://codecov.io/gh/MusicLang/maidi" > 
+ <img src="https://codecov.io/gh/MusicLang/maidi/graph/badge.svg?token=5VWDG7068F"/> 
+ </a>
+
 ![M(AI)DI](assets/logo2.png)
 
 M(AI)DI

@@ -54,9 +54,7 @@ Just set your API_URL and API_KEY in the environment (or get one `here <https://
     >>> api = MusicLangAPI(API_URL, API_KEY)
     >>> score = MidiScore.from_empty(instruments=[instrument.PIANO, instrument.ELECTRIC_BASS_FINGER], nb_bars=4, ts=(4, 4), tempo=120)
     >>> mask = np.ones((2, 4))
-    >>> predicted_score = api._predict_with_api(score, mask, model="control_masking_large", timeout=120, temperature=0.95)
-    >>> predicted_score is score
-    True
+    >>> predicted_score = api.predict(score, mask, model="control_masking_large", timeout=120, temperature=0.95)
 
 **2. Generate a new track in a score**: Start from a midi file and add a track:
 

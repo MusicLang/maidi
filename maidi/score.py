@@ -1201,6 +1201,14 @@ class MidiScore:
 
     @property
     def instruments(self):
+        """
+        Get the list of instruments in the score as a list of strings
+
+        Returns
+        -------
+        instruments: list of str
+
+        """
         from maidi.constants import REVERSE_INSTRUMENT_DICT
         return [REVERSE_INSTRUMENT_DICT[(track_key[1], track_key[2])] for track_key in self.track_keys]
 
@@ -1227,7 +1235,6 @@ class MidiScore:
         -------
 
         """
-        bar_duration_quarters = 4 * ts[0] / ts[1]
         track_keys = [
             (idx, INSTRUMENTS_DICT[ins][0], INSTRUMENTS_DICT[ins][1] == 1)
             for idx, ins in enumerate(instruments)
@@ -1242,7 +1249,7 @@ class MidiScore:
                 ts[0],
                 ts[1],
             ]
-            for i in range(nb_bars)
+            for _ in range(nb_bars)
         ]
         assert len(bars) == nb_bars, "Bars length mismatch"
         tracks = {}

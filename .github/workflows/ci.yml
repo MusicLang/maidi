@@ -62,6 +62,12 @@ jobs:
         pip install sphinx
         pip install .
 
+    - name: Bump version
+      run: |
+        bump2version patch
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Build documentation
       run: |
         cd docs
@@ -76,5 +82,5 @@ jobs:
 
     - name: Trigger ReadTheDocs build
       run: |
-        curl -X POST -d "token=${{ secrets.READTHEDOCS_TOKEN }}" https://readthedocs.org/api/v2/webhook/maidi/12345/
+        curl -X POST -d "token=${{ secrets.READTHEDOCS_TOKEN }}" https://readthedocs.org/api/v2/webhook/maidi/271213/
 

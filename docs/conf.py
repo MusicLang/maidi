@@ -26,7 +26,8 @@ extensions = [
               'sphinx.ext.napoleon',
               'sphinx.ext.autosummary',
               'sphinx_gallery.gen_gallery',
-              'numpydoc'
+              'numpydoc',
+              'sphinx_copybutton',
               ]
 
 
@@ -36,6 +37,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = "furo"
 html_static_path = ['_static']
 
+# Configuration for sphinx-copybutton
+copybutton_prompt_text = ">>> "  # This removes the >>> from the copied text
 
 from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_documenter
@@ -120,10 +123,11 @@ setup_doctest(doctest)
 '''
 
 def setup(app):
-    app.add_css_file('css/custom_css.css')
     app.add_directive('autoautosummary', AutoAutoSummary)
     app.connect('autodoc-skip-member', skip_undocumented_members)
     # If you are using recommonmark for Markdown
     app.add_config_value('recommonmark_config', {
         'auto_toc_tree_section': 'Contents',
     }, True)
+    app.add_css_file('custom.css')
+
