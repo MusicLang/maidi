@@ -39,6 +39,12 @@ jobs:
       env:
         CI: true
 
+    - name: Run doc tests
+      run: |
+        pytest docs/ --doctest-glob="*.rst"
+      env:
+        CI: true
+
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
       with:
