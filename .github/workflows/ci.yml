@@ -46,7 +46,6 @@ jobs:
 
   bumpversion:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -56,10 +55,6 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Extract tag version
-      id: extract_version
-      run: echo "::set-output name=tag::${GITHUB_REF#refs/tags/v}"
-
     - name: Install bump2version
       run: |
         python -m pip install --upgrade pip
@@ -68,7 +63,7 @@ jobs:
     - name: Bump version
       run: |
         current_version=$(python setup.py --version)
-        bump2version --current-version $current_version --new-version ${{ steps.extract_version.outputs.tag }} --allow-dirty --tag --commit patch
+        bump2version --current-version $current_version --allow-dirty --tag --commit patch
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
