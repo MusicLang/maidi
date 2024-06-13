@@ -1,6 +1,13 @@
+<div style="display:flex;">
+
 <a href="https://codecov.io/gh/MusicLang/maidi" > 
  <img src="https://codecov.io/gh/MusicLang/maidi/graph/badge.svg?token=5VWDG7068F"/> 
  </a>
+
+<a href="#" >
+    <img src="https://github.com/musiclang/maidi/actions/workflows/ci.yml/badge.svg"/>
+</a>
+</div>
 
 ![M(AI)DI](assets/logo2.png)
 
