@@ -7,6 +7,14 @@
 <a href="#" >
     <img src="https://github.com/musiclang/maidi/actions/workflows/ci.yml/badge.svg"/>
 </a>
+
+<a href="https://snyk.io/test/github/musiclang/maidi">
+    <img src="https://snyk.io/test/github/musiclang/maidi/badge.svg" alt="Known Vulnerabilities" data-canonical-src="https://snyk.io/test/github/musiclang/maidi" style="max-width:100%;">
+</a>
+
+<a href="https://github.com/MusicLang/maidi/blob/main/LICENSE.md"> 
+    <img src="https://img.shields.io/github/license/MusicLang/maidi" alt="License" />
+</a>
 </div>
 
 ![M(AI)DI](assets/logo2.png)
