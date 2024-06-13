@@ -38,6 +38,19 @@ class ScoreTagger:
     def __init__(self, tags_providers):
         self.tags_providers = tags_providers
 
+    def remove_fake_notes(self, track_bar):
+        """
+        Remove notes that have velocity < 2
+
+        """
+        from maidi import MidiScore
+        index = track_bar["velocity"] >= MidiScore.MINIMUM_VELOCITY
+        new_track_bar = {}
+        for key in track_bar.keys():
+            new_track_bar[key] = track_bar[key][index]
+        return new_track_bar
+
+
     def tag_score(self, score):
         tags = []
 
@@ -48,6 +61,7 @@ class ScoreTagger:
                 track_bar = score.get_track_bar(idx_track, idx_bar)
                 bar = score.bars[idx_bar]
                 for provider in self.tags_providers:
+                    track_bar = self.remove_fake_notes(track_bar)
                     bar_tags += provider.get_tags(track_bar, bar, score)
                 track_tags.append(bar_tags)
             tags.append(track_tags)

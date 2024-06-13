@@ -78,74 +78,53 @@ You can control the tags at the level of each bar of each track.
 
 
 
-
 Example
 ---------
 
+In the following example, we constrain the model to generate a piano track with a dense monophonic melody and
+constrain the second bar of the bass track to use a quite high register:
 
-In the following example we constraint the model to generate a piano track with a dense monophonic melody and
-constraint the second bar of the bass track to use a quite high register ::
+.. doctest::
 
-
-    import os
-    from maidi import MidiScore, instrument
-    import maidi.chords_symbols as cs
-    from maidi.integrations.api import MusicLangAPI
-
-    # Assuming API_KEY is set in the environment
-    API_KEY = os.getenv("API_KEY")
-
-    # Create a 4 bar template with the given instruments
-    score = MidiScore.from_empty(
-        instruments=[instrument.PIANO, instrument.ACOUSTIC_BASS], nb_bars=5, ts=(4, 4), tempo=120
-    )
-    # Get the controls (the prompt) for this score
-    mask, tags, chords = score.get_empty_controls(prevent_silence=True)
-    mask[:, :] = 1  # Regenerate everything in the score
-
-    # Let control the tags
-    for i in range(mask.shape[1]):
-        tags[0][i] = ['CONTROL_DENSITY__HIGH', 'CONTROL_MAX_POLYPHONY__1']
-
-    # Second bar of the bass track use a quite high register (like alto)
-    tags[1][1] = ['CONTROL_MIN_REGISTER__alto', 'CONTROL_MAX_REGISTER__alto']
-
-    # Call the musiclang API to predict the score
-    api = MusicLangAPI(api_key=API_KEY, verbose=True)
-    predicted_score = api.predict(score,
-                                  mask, tags=tags, chords=chords, async_mode=False, polling_interval=3
-                                  )
-    predicted_score.write("predicted_score.mid")
-
-
-
+    >>> import os
+    >>> from maidi import MidiScore, instrument
+    >>> import maidi.chords_symbols as cs
+    >>> from maidi.integrations.api import MusicLangAPI
+    >>> API_URL = os.getenv("API_URL")
+    >>> API_KEY = os.getenv("API_KEY")
+    >>> score = MidiScore.from_empty(instruments=[instrument.PIANO, instrument.ACOUSTIC_BASS], nb_bars=5, ts=(4, 4), tempo=120)
+    >>> mask, tags, chords = score.get_empty_controls(prevent_silence=True)
+    >>> mask[:, :] = 1  # Regenerate everything in the score
+    >>> for i in range(mask.shape[1]):
+    ...     tags[0][i] = ['CONTROL_DENSITY__HIGH', 'CONTROL_MAX_POLYPHONY__1']
+    >>> tags[1][1] = ['CONTROL_MIN_REGISTER__alto', 'CONTROL_MAX_REGISTER__alto']
+    >>> api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+    >>> predicted_score = api.predict(score, mask=mask, tags=tags, chords=chords, async_mode=False, polling_interval=3)
+    >>> predicted_score.write("predicted_score.mid")
 
 Automatically tag a score
 --------------------------
 
 M(AI)DI provides a feature to automatically extract the tags from a score. So you can do analysis of a given score
-or even use it as a prompt for the model to generate a music that "looks alike" the analyzed one.
+or even use it as a prompt for the model to generate music that "looks alike" the analyzed one.
 
-The following example shows how to extract the tags from a given score ::
+The following example shows how to extract the tags from a given score:
 
+.. doctest::
 
-    from maidi.analysis import tags_providers
+    >>> from maidi.analysis import tags_providers
+    >>> from maidi import MidiScore, midi_library
+    >>> from maidi.analysis import ScoreTagger
+    >>> score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
+    >>> tagger = ScoreTagger([
+    ...     tags_providers.DensityTagsProvider(),
+    ...     tags_providers.MinMaxPolyphonyTagsProvider(),
+    ...     tags_providers.MinMaxRegisterTagsProvider(),
+    ...     tags_providers.SpecialNotesTagsProvider(),
+    ... ])
+    >>> tags = tagger.tag_score(score)
+    >>> chords = score.get_chords_prompt()
 
-    score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
-
-    tagger = ScoreTagger(
-        [
-            tags_providers.DensityTagsProvider(),
-            tags_providers.MinMaxPolyphonyTagsProvider(),
-            tags_providers.MinMaxRegisterTagsProvider(),
-            tags_providers.SpecialNotesTagsProvider(),
-        ]
-    )
-
-    tags = tagger.tag_score(score)
-    chords = score.get_chords_prompt()
-    print(tags)
-    print(chords)
 
 
 

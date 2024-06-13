@@ -15,6 +15,10 @@ class MidiScore:
     The main object to handle midi scores. It allows to manipulate midi scores in a numpy-like way by splitting it
     into two dimensions : tracks and bars.
 
+    warning :: All midi notes with velocity < 2 are ignored when writing midi files, they are considered as fake notes. This behaviour will be removed in the future
+
+    warning:: This class should not be directly instantiated, use :meth:`~MidiScore.from_midi()` or :meth:`~MidiScore.from_base64()` instead
+
     **Usage**
 
     Load a midi file and write it to a new file
@@ -25,8 +29,7 @@ class MidiScore:
 
     Add a track and assign the content of the track to be the same as the first track
 
-    >>> from maidi import MidiScore
-    >>> from maidi import instrument
+    >>> from maidi import MidiScore, instrument
     >>> score = MidiScore.from_midi("path/to/midi.mid")
     >>> score = score.add_instrument(instrument.ACOUSTIC_GUITAR)
     >>> score[-1, :] = score[0, :]
@@ -37,6 +40,8 @@ class MidiScore:
     >>> score1 = MidiScore.from_midi("path/to/midi1.mid")
     >>> score2 = MidiScore.from_midi("path/to/midi2.mid")
     >>> score = score1.concatenate(score2, axis=1)
+    >>> score.nb_bars == score1.nb_bars + score2.nb_bars
+    True
 
 
     """
@@ -50,6 +55,7 @@ class MidiScore:
     TIME_SIGNATURE_DENOMINATOR_INDEX = 6
     FAKE_NOTE_VELOCITY = 1  # Should be < 2 to be ignored by the model
     FAKE_NOTE_DURATION = 2
+    MINIMUM_VELOCITY = 2
     FAKE_NOTE_PITCH = 60
 
     def __init__(self, bars, tracks, track_keys, tempo, tpq=24, **kwargs):
@@ -1235,8 +1241,6 @@ class MidiScore:
                 "",
                 ts[0],
                 ts[1],
-                int(i * tpq * bar_duration_quarters),
-                int((i + 1) * tpq * bar_duration_quarters),
             ]
             for i in range(nb_bars)
         ]

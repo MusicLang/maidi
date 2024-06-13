@@ -82,8 +82,6 @@ def pitch_to_note_type(pitch, velocity, time, duration, chord, is_drum, is_absol
         real_extension,
         num,
         den,
-        chord_start,
-        chord_end,
     ) = chord
     type, idx, oct = parse_pitch(pitch, chord, is_drum, is_absolute)
     amp = get_amp_figure(velocity)

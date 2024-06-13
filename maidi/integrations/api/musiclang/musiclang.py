@@ -34,6 +34,7 @@ class MusicLangAPI(MidiApiIntegration):
 
 
     >>> import os
+    >>> import numpy as np
     >>> API_URL = os.getenv("API_URL")
     >>> API_KEY = os.getenv("API_KEY")
     >>> from maidi.integrations.api import MusicLangAPI
@@ -76,6 +77,49 @@ class MusicLangAPI(MidiApiIntegration):
 
         self.verbose = verbose
 
+    def _predict_with_api(
+            self,
+            score,
+            mask,
+            model="control_masking_large",
+            temperature=0.95,
+            async_mode=False,
+            polling_interval=1,
+            chords=None,
+            tags=None,
+            **prediction_kwargs,
+    ):
+        """
+
+        Parameters
+        ----------
+        mask : np.array, shape (n_tracks, n_bars)
+            The mask to use for the prediction
+        model : str, optional, (Default value = "control_masking_large")
+            The choice of model to use
+        temperature : float, (Default value = 0.95)
+            The temperature for the model, don't go higher than 1.0
+        async_mode : bool, optional, (Default value = False)
+            If True, return the task id, otherwise wait for the request to finish with polling
+        polling_interval : int, optional, (Default value = 1)
+            Interval in seconds to poll the API
+        **prediction_kwargs :
+            Additional arguments for the model (for example chord and control tags)
+
+        Returns
+        -------
+
+        """
+        mask = np.asarray(mask)
+        score.check_mask(mask)
+        task_id = self._call_predict_api(
+            score.to_base64(), mask, model, temperature, chords, tags, **prediction_kwargs
+        )
+        if async_mode:
+            return task_id
+        else:
+            score = self.from_task_id(task_id, polling_interval=polling_interval)
+        return score
 
     def pprint(self, *args, **kwargs):
         if self.verbose:
@@ -101,6 +145,7 @@ class MusicLangAPI(MidiApiIntegration):
 
         **Usage**
 
+        >>> import numpy as np
         >>> from maidi import MidiScore
         >>> from maidi.integrations.api import MusicLangAPI
         >>> score = MidiScore.from_empty(instruments=['piano'], nb_bars=4, ts=(4, 4), tempo=120)
@@ -489,9 +534,10 @@ class MusicLangAPI(MidiApiIntegration):
 
         **Usage**
 
+        >>> import numpy as np
+        >>> import time
         >>> from maidi import MidiScore
         >>> from maidi.integrations.api import MusicLangAPI
-        >>> import time
         >>> score = MidiScore.from_empty(instruments=['piano'], nb_bars=4, ts=(4, 4), tempo=120)
         >>> mask = np.ones((1, 4))
         >>> api = MusicLangAPI(API_URL, API_KEY)
@@ -608,49 +654,7 @@ class MusicLangAPI(MidiApiIntegration):
         response.raise_for_status()
         return response.json()["task_id"]
 
-    def _predict_with_api(
-            self,
-            score,
-            mask,
-            model="control_masking_large",
-            temperature=0.95,
-            async_mode=False,
-            polling_interval=1,
-            chords=None,
-            tags=None,
-            **prediction_kwargs,
-    ):
-        """
 
-        Parameters
-        ----------
-        mask : np.array, shape (n_tracks, n_bars)
-            The mask to use for the prediction
-        model : str, optional, (Default value = "control_masking_large")
-            The choice of model to use
-        temperature : float, (Default value = 0.95)
-            The temperature for the model, don't go higher than 1.0
-        async_mode : bool, optional, (Default value = False)
-            If True, return the task id, otherwise wait for the request to finish with polling
-        polling_interval : int, optional, (Default value = 1)
-            Interval in seconds to poll the API
-        **prediction_kwargs :
-            Additional arguments for the model (for example chord and control tags)
-
-        Returns
-        -------
-
-        """
-        mask = np.asarray(mask)
-        score.check_mask(mask)
-        task_id = self._call_predict_api(
-            score.to_base64(), mask, model, temperature, chords, tags, **prediction_kwargs
-        )
-        if async_mode:
-            return task_id
-        else:
-            score = self.from_task_id(task_id, polling_interval=polling_interval)
-        return score
 
     def _predict_with_predictor(
             self,

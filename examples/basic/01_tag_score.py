@@ -12,7 +12,6 @@ from maidi import MidiScore, ScoreTagger, midi_library
 from maidi.analysis import tags_providers
 
 score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
-
 tagger = ScoreTagger(
     [
         tags_providers.DensityTagsProvider(),

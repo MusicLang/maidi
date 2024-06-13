@@ -26,7 +26,7 @@ In this example :
 - We tag each bar of the score with musical informations
 - We print the tags
 
-.. GENERATED FROM PYTHON SOURCE LINES 10-28
+.. GENERATED FROM PYTHON SOURCE LINES 10-27
 
 .. code-block:: Python
 
@@ -35,7 +35,6 @@ In this example :
     from maidi.analysis import tags_providers
 
     score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
-
     tagger = ScoreTagger(
         [
             tags_providers.DensityTagsProvider(),

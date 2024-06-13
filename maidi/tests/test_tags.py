@@ -45,5 +45,14 @@ def test_basic_density_tags_with_score_tagger():
         assert len(tags[0][0]) == 1
 
 
+def test_empty_score_lead_to_0_polyphony():  # Check that tagger remove low velocity notes
+    score = MidiScore.from_empty(['piano', 'flute'], nb_bars=4, ts=(4, 4), tempo=120)
+    tagger = ScoreTagger(
+        [
+            tags_providers.MinMaxPolyphonyTagsProvider(),
+        ]
+    )
 
-
+    tags = tagger.tag_score(score)
+    assert 'CONTROL_MAX_POLYPHONY__0' in tags[0][0]
+    assert 'CONTROL_MIN_POLYPHONY__0' in tags[0][0]

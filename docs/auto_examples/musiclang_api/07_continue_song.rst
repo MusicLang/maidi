@@ -25,7 +25,7 @@ In this example :
 - We load an existing song
 - We ask musiclang to continue it for 4 bars
 
-.. GENERATED FROM PYTHON SOURCE LINES 10-47
+.. GENERATED FROM PYTHON SOURCE LINES 10-48
 
 .. code-block:: Python
 
@@ -43,7 +43,7 @@ In this example :
 
     # Load a score with two tracks and 4 bars (drum and bass)
     score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
-
+    print("Starting number of bars : ", score.nb_bars)
     # Control the chord progression, same as before (Optional)
     chords = [
                 (cs.I, cs.C, cs.major, cs._root_position),
@@ -64,8 +64,9 @@ In this example :
                                  chords=chords,
                                  tags=tags,
                                  nb_added_bars_step=2,  # Choose how many bar generate per steps (if none it is calculated automatically)
-                                 async_mode=False, polling_interval=3
+                                 polling_interval=3
     )
+    print("Final number of bars : ", predicted_score.nb_bars)
     predicted_score.write("predicted_score.mid")
 
 .. _sphx_glr_download_auto_examples_musiclang_api_07_continue_song.py:

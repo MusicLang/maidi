@@ -12,12 +12,14 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'M(AI)DI'
 copyright = '2024, GARDIN Florian, ZATAR Mehdi'
 author = 'GARDIN Florian, ZATAR Mehdi'
-release = '0.10'
+release = '0.11'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx_rtd_theme',
+extensions = [
+              'sphinx.ext.doctest',
+              'sphinx_rtd_theme',
               'sphinx.ext.duration',
               'sphinx.ext.doctest',
               'sphinx.ext.autodoc',
@@ -104,7 +106,18 @@ autodoc_default_options = {
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 
+import sys
 
+# Add to the python path the directory of the current file
+sys.path.append(os.path.dirname(__file__))
+
+import doctest_setup
+import doctest
+doctest_global_setup = '''
+import doctest
+from doctest_setup import setup_doctest
+setup_doctest(doctest)
+'''
 
 def setup(app):
     app.add_css_file('css/custom_css.css')
