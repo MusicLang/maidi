@@ -7,7 +7,7 @@ requirements = (this_directory / "requirements.txt").read_text().splitlines()
 
 setup(
     name='maidi',
-    version='0.12.12',
+    version='0.12.13',
     author="Florian GARDIN",
     author_email="fgardin.pro@gmail.com",
     description="A python package for symbolic AI music inference",
