@@ -1,9 +1,9 @@
 .. _from_scratch:
 
-Generate idead from scratch
+Generate an idea from scratch
 ==============================
 
-With the `generate_from_scratch`method of the MusicLang API you can create an idea from 1 to 16 bars with
+With the `generate_from_scratch` method of the MusicLang API you can create an idea from 1 to 16 bars with
 the instruments, time signature, tempo of your choice. You can even customize the chords and the musical properties of each bars
 with the `chords` and `tags` parameters.
 
