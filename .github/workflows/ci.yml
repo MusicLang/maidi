@@ -69,7 +69,7 @@ jobs:
     - name: Bump version
       run: |
         current_version=$(python setup.py --version)
-        bump2version --current-version $current_version --allow-dirty --tag --commit patch
+        bump2version patch --tag
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
