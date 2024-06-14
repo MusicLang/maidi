@@ -15,7 +15,6 @@ from maidi import MidiScore, instrument, midi_library
 from maidi.integrations.api import MusicLangAPI
 
 # Assuming API_URL and MUSICLANG_API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
 MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
 
 nb_bars_transition = 4  # Should be less than 12 bars, the higher the value the less context is added to the model

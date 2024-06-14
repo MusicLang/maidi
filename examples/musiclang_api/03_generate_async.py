@@ -16,7 +16,6 @@ from maidi.integrations.api import MusicLangAPI
 
 
 # Assuming API_URL and MUSICLANG_API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
 MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
 
 # Your choice of params for generation here

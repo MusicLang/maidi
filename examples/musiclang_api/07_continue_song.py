@@ -14,7 +14,6 @@ from maidi.integrations.api import MusicLangAPI
 from maidi import chords_symbols as cs
 
 # Assuming API_URL and MUSICLANG_API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
 MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
 
 nb_bars_extension = 4

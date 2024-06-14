@@ -14,7 +14,6 @@ from maidi import MidiScore, instrument, midi_library
 from maidi.integrations.api import MusicLangAPI
 
 # Assuming API_URL and MUSICLANG_API_KEY are set in the environment
-API_URL = os.getenv("API_URL")
 MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
 
 # Create a 4 bar template with the given instruments
