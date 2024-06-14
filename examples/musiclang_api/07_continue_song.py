@@ -13,9 +13,9 @@ from maidi import MidiScore, instrument, midi_library
 from maidi.integrations.api import MusicLangAPI
 from maidi import chords_symbols as cs
 
-# Assuming API_URL and API_KEY are set in the environment
+# Assuming API_URL and MUSICLANG_API_KEY are set in the environment
 API_URL = os.getenv("API_URL")
-API_KEY = os.getenv("API_KEY")
+MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
 
 nb_bars_extension = 4
 
@@ -36,7 +36,7 @@ tags = [[['CONTROL_MIN_POLYPHONY__1', 'CONTROL_MAX_POLYPHONY__1', 'CONTROL_DENSI
         ]
 
 # Call the musiclang API to predict the score
-api = MusicLangAPI(api_key=API_KEY, verbose=True)
+api = MusicLangAPI(api_key=MUSICLANG_API_KEY, verbose=True)
 predicted_score = api.extend(score,
                              nb_bars_extension,  #  How many bars to add to the current score
                              chords=chords,

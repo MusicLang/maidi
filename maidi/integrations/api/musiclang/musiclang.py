@@ -36,10 +36,10 @@ class MusicLangAPI(MidiApiIntegration):
     >>> import os
     >>> import numpy as np
     >>> API_URL = os.getenv("API_URL")
-    >>> API_KEY = os.getenv("API_KEY")
+    >>> MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
     >>> from maidi.integrations.api import MusicLangAPI
     >>> from maidi import MidiScore,instrument
-    >>> api = MusicLangAPI(API_URL, API_KEY)
+    >>> api = MusicLangAPI(API_URL, MUSICLANG_API_KEY)
     >>> score = MidiScore.from_empty(instruments=[instrument.PIANO, instrument.ELECTRIC_BASS_FINGER], nb_bars=4, ts=(4, 4), tempo=120)
     >>> mask = np.ones((2, 4))
     >>> predicted_score = api.predict(score, mask, model="control_masking_large", timeout=120, temperature=0.95)
@@ -51,7 +51,7 @@ class MusicLangAPI(MidiApiIntegration):
     POLLING_ENDPOINT = "polling_predict"
     MAX_CONTEXT = 16 # Maximum context size of 16 bars for all masking models
 
-    def __init__(self, api_url='https://api.musiclang.io', api_key=None, verbose=False):
+    def __init__(self, api_key=None, api_url='https://api.musiclang.io', verbose=False):
         """
         Initialize the MusicLangAPI class
 
@@ -71,7 +71,7 @@ class MusicLangAPI(MidiApiIntegration):
 
         if self.api_key is None:
             # Get env
-            self.api_key = os.getenv(constants.API_KEY_VARIABLE, None)
+            self.api_key = os.getenv(constants.MUSICLANG_API_KEY_VARIABLE, None)
         if self.api_key is None:  # If not in env and not passed as a variable, raise an error
             raise ValueError('API key missing')
 
@@ -157,7 +157,7 @@ class MusicLangAPI(MidiApiIntegration):
         >>> from maidi import MidiScore, instrument
         >>> from maidi.integrations.api import MusicLangAPI
         >>> from maidi.integrations.api.musiclang import models
-        >>> api = MusicLangAPI(API_URL, API_KEY)
+        >>> api = MusicLangAPI(API_URL, MUSICLANG_API_KEY)
         >>> score = api.generate_from_scratch(instruments=[instrument.ELECTRIC_PIANO, instrument.ALTO_SAX], nb_bars=4, ts=(4, 4), tempo=120, model=models.MODEL_CONTROL_MASKING_LARGE, temperature=0.95)
         >>> score.write("generated_score.mid")
         """
@@ -196,7 +196,7 @@ class MusicLangAPI(MidiApiIntegration):
         >>> from maidi.integrations.api import MusicLangAPI
         >>> score = MidiScore.from_empty(instruments=['piano'], nb_bars=4, ts=(4, 4), tempo=120)
         >>> mask = np.ones((1, 4))
-        >>> api = MusicLangAPI(API_URL, API_KEY)  # Get your API_URL and API_KEY here
+        >>> api = MusicLangAPI(API_URL, MUSICLANG_API_KEY)  # Get your API_URL and MUSICLANG_API_KEY here
         >>> predicted_score = api.predict(score, mask, model="control_masking_large", timeout=120, temperature=0.95)
         >>> predicted_score.write("predicted_score.mid")
 
@@ -280,7 +280,7 @@ class MusicLangAPI(MidiApiIntegration):
             return result  # Return the task id
 
         score = result
-        score = score.sanitize_score(score_to_predict, mask)
+        score = self.sanitize_score(score, score_to_predict, mask)
         # Cut silenced bars if at the end or beginning
         if cut_silenced_bars:
             score = score.cut_silenced_bars_at_beginning_and_end()
@@ -293,7 +293,8 @@ class MusicLangAPI(MidiApiIntegration):
             )
             new_mask = score.get_mask()
             new_mask[:, -nb_missing_bars:] = 1
-            return score.predict(
+            return self.predict(
+                score,
                 new_mask,
                 model=model,
                 timeout=timeout,
@@ -303,6 +304,32 @@ class MusicLangAPI(MidiApiIntegration):
             )
         return score
 
+    def sanitize_score(self, score, score_to_compare, mask):
+        """Do checks after predicting a score
+
+        Parameters
+        ----------
+        score :
+            param score_to_compare:
+        mask :
+            return:
+        score_to_compare : MidiScore
+
+
+        Returns
+        -------
+
+        """
+        score = score.copy()
+        score.check_times()
+        if len(score.track_keys) > len(score_to_compare.track_keys):
+            # If the model added tracks, we need to remove them
+            score = score.get_track_subset(0, len(score_to_compare.track_keys))
+
+        if score.nb_bars > mask.shape[1]:
+            score = score.get_score_between(0, mask.shape[1])
+
+        return score
 
     def _get_subchords_and_subtags(self, chords, tags, index_start, index_end, offset=None):
         chords = chords[index_start:index_end] if chords is not None else None
@@ -492,8 +519,9 @@ class MusicLangAPI(MidiApiIntegration):
                                                                  mask.shape[1] - nb_added_bars_in_this_step)
 
             offset_bar += nb_added_bars_in_this_step
-            result_predicted_score = self._predict_segment(predicted_score, mask, model, subtags, subchords,
-                                                           temperature, polling_interval, timeout, prediction_kwargs)
+            result_predicted_score = self.predict(predicted_score, mask, model, tags=subtags, chords=subchords,
+                                                           temperature=temperature, polling_interval=polling_interval,
+                                                  timeout=timeout, **prediction_kwargs)
             new_score = base_score.concatenate(result_predicted_score, axis=1)
 
         return new_score
@@ -509,17 +537,6 @@ class MusicLangAPI(MidiApiIntegration):
         mask[:, -nb_added_bars_in_this_step:] = 1
         return mask
 
-    def _predict_segment(self, predicted_score, mask, model, subtags, subchords,
-                         temperature, polling_interval, timeout, prediction_kwargs):
-        return self.predict(predicted_score,
-                            mask,
-                            tags=subtags,
-                            model=model,
-                            chords=subchords,
-                            temperature=temperature,
-                            polling_interval=polling_interval,
-                            timeout=timeout,
-                            prediction_kwargs=prediction_kwargs)
 
 
 
@@ -538,7 +555,7 @@ class MusicLangAPI(MidiApiIntegration):
             if not isinstance(deg, int) or deg < 0 or deg > 6:
                 raise ValueError(f'Chord degree is wrong : {deg}. It should be an integer between 0 and 6 included')
             if not isinstance(tone, int) or tone < 0 or tone > 11:
-                raise ValueError(f'Chord degree is wrong : {tone}. It should be an integer between 0 and 11 included')
+                raise ValueError(f'Tonality degree is wrong : {tone}. It should be an integer between 0 and 11 included')
             if not (mode in ['m', 'M']):
                 raise ValueError(f'Scale mode is wrong, it should be either "m" (minor mode) or "M" (major mode)')
             if not is_valid_extension(extension):
@@ -586,7 +603,7 @@ class MusicLangAPI(MidiApiIntegration):
         >>> from maidi.integrations.api import MusicLangAPI
         >>> score = MidiScore.from_empty(instruments=['piano'], nb_bars=4, ts=(4, 4), tempo=120)
         >>> mask = np.ones((1, 4))
-        >>> api = MusicLangAPI(API_URL, API_KEY)
+        >>> api = MusicLangAPI(API_URL, MUSICLANG_API_KEY)
         >>> task_id = api.predict(score, mask, async_mode=True)
         >>> score = api.from_task_id(task_id, polling_interval=3) # Wait for the task to complete by polling the API every 3 seconds
 
@@ -649,7 +666,7 @@ class MusicLangAPI(MidiApiIntegration):
             self.pprint(f"Task {task_id} successfully completed")
             return MidiScore.from_base64(result["result"]["midi"])
         elif result["status"] == "FAILED":
-            raise ValueError("Task failed")
+            raise RuntimeError("Task failed")
         self.pprint(f"Task {task_id} not completed yet")
 
         return None
@@ -700,65 +717,6 @@ class MusicLangAPI(MidiApiIntegration):
         response.raise_for_status()
         return response.json()["task_id"]
 
-
-
-    def _predict_with_predictor(
-            self,
-            score,
-            predictor,
-            mask,
-            model="large",
-            timeout=3000,
-            temperature=0.95,
-            **prediction_kwargs,
-    ):
-        """
-
-        Not implemented yet.
-
-        Parameters
-        ----------
-        predictor :
-
-        mask :
-
-        model :
-             (Default value = "large")
-        timeout :
-             (Default value = 3000)
-        temperature :
-             (Default value = 0.95)
-        **prediction_kwargs :
-
-
-        Returns
-        -------
-
-        """
-        mask = np.asarray(mask)
-        score.check_mask(mask)
-        prompt_file, output_file, midi_file, output_midi_file = (
-            self._create_temp_midi_files(score)
-        )
-        score.write(midi_file)
-        predictor(
-            midi_file,
-            output_midi_file,
-            prompt_file,
-            output_file,
-            mask,
-            chord_range=(0, mask.shape[1]),
-            model=model,
-            timeout=timeout,
-            temperature=temperature,
-            **prediction_kwargs,
-        )
-        score = MidiScore.from_midi(output_midi_file)
-        # Clean up the files
-        self._remove_temp_midi_files(
-            prompt_file, output_file, midi_file, output_midi_file
-        )
-        return score
 
     def _create_temp_midi_files(self, score):
         """ """

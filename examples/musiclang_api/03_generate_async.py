@@ -15,9 +15,9 @@ from maidi import instrument
 from maidi.integrations.api import MusicLangAPI
 
 
-# Assuming API_URL and API_KEY are set in the environment
+# Assuming API_URL and MUSICLANG_API_KEY are set in the environment
 API_URL = os.getenv("API_URL")
-API_KEY = os.getenv("API_KEY")
+MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
 
 # Your choice of params for generation here
 instruments = [
@@ -34,7 +34,7 @@ mask, tags, chords = score.get_empty_controls(prevent_silence=True)
 mask[:, :] = 1  # Regenerate everything in the score
 
 # Call the musiclang API to predict the score
-api = MusicLangAPI(api_key=API_KEY, verbose=True)
+api = MusicLangAPI(api_key=MUSICLANG_API_KEY, verbose=True)
 task_id = api.predict(score,
                               mask,
                               tags=tags,

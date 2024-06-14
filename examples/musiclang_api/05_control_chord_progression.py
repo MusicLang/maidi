@@ -18,8 +18,8 @@ from maidi import MidiScore, instrument
 import maidi.chords_symbols as cs
 from maidi.integrations.api import MusicLangAPI
 
-# Assuming API_URL and API_KEY are set in the environment
-API_KEY = os.getenv("API_KEY")
+# Assuming API_URL and MUSICLANG_API_KEY are set in the environment
+MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
 
 # Create a 4 bar template with the given instruments
 score = MidiScore.from_empty(
@@ -39,7 +39,7 @@ chords = [(cs.I, cs.D, cs.major, cs._root_position),
           ]
 
 # Call the musiclang API to predict the score
-api = MusicLangAPI(api_key=API_KEY, verbose=True)
+api = MusicLangAPI(api_key=MUSICLANG_API_KEY, verbose=True)
 predicted_score = api.predict(score,
     mask, tags=tags, chords=chords, async_mode=False, polling_interval=3
 )

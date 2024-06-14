@@ -13,9 +13,9 @@ from maidi import instrument
 from maidi.integrations.api import MusicLangAPI
 import os
 
-# Assuming API_URL and API_KEY are set in the environment
+# Assuming API_URL and MUSICLANG_API_KEY are set in the environment
 # Call the musiclang API to predict the score
-api = MusicLangAPI(api_key=os.getenv("API_KEY"), verbose=True)
+api = MusicLangAPI(api_key=os.getenv("MUSICLANG_API_KEY"), verbose=True)
 
 instruments = [instrument.DRUMS, instrument.ELECTRIC_BASS_FINGER]
 nb_bars = 4

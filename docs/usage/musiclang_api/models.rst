@@ -25,6 +25,6 @@ Here is a simple example of how to use the API with the `control_masking_large` 
     >>> score = MidiScore.from_empty(instruments=[instrument.PIANO], nb_bars=4, ts=(4, 4), tempo=120)
     >>> mask, tags, chords = score.get_empty_controls(prevent_silence=True)
     >>> mask[:, :] = 1  # Regenerate everything in the score
-    >>> api = MusicLangAPI(os.getenv("API_URL"), os.getenv("API_KEY"), verbose=True)
+    >>> api = MusicLangAPI(os.getenv("MUSICLANG_API_KEY"), verbose=True)
     >>> predicted_score = api.predict(score, model=chosen_model, mask=mask, tags=tags, chords=chords, async_mode=False, polling_interval=5)
     >>> predicted_score.write("predicted_score.mid")
