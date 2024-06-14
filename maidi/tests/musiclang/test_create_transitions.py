@@ -6,11 +6,11 @@ from maidi.integrations.api import MusicLangAPI
 from maidi import instrument
 
 API_URL = "https://api.mockmusiclang.io"
-API_KEY = "testapikey"
+MUSICLANG_API_KEY = "testapikey"
 
 @pytest.fixture
 def setup_api():
-    return MusicLangAPI(api_url=API_URL, api_key=API_KEY, verbose=True)
+    return MusicLangAPI(api_url=API_URL, api_key=MUSICLANG_API_KEY, verbose=True)
 
 @pytest.fixture
 def setup_scores():

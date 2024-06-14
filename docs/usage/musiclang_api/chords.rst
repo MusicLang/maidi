@@ -35,8 +35,7 @@ We let the last bar unspecified for a total of 5 chords in the generation:
     >>> from maidi import MidiScore, instrument
     >>> import maidi.chords_symbols as cs
     >>> from maidi.integrations.api import MusicLangAPI
-    >>> API_URL = os.getenv("API_URL")
-    >>> API_KEY = os.getenv("API_KEY")
+    >>> MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
     >>> score = MidiScore.from_empty(instruments=[instrument.ELECTRIC_PIANO], nb_bars=5, ts=(4, 4), tempo=120)
     >>> mask, tags, chords = score.get_empty_controls(prevent_silence=True)
     >>> mask[:, :] = 1  # Regenerate everything in the score
@@ -47,7 +46,7 @@ We let the last bar unspecified for a total of 5 chords in the generation:
     ...     (cs.V, cs.D, cs.major, cs._7),
     ...     None  # Let the model choose the last chord
     ... ]
-    >>> api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+    >>> api = MusicLangAPI(MUSICLANG_API_KEY, verbose=True)
     >>> predicted_score = api.predict(score, mask, tags=tags, chords=chords, async_mode=False, polling_interval=3)
     >>> predicted_score.write("predicted_score.mid")
 

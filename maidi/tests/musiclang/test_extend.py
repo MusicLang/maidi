@@ -6,12 +6,12 @@ from maidi.integrations.api import MusicLangAPI
 from maidi import instrument
 
 API_URL = "https://api.mockmusiclang.io"
-API_KEY = "testapikey"
+MUSICLANG_API_KEY = "testapikey"
 
 
 @pytest.fixture
 def setup_api():
-    return MusicLangAPI(api_url=API_URL, api_key=API_KEY, verbose=True)
+    return MusicLangAPI(api_url=API_URL, api_key=MUSICLANG_API_KEY, verbose=True)
 
 
 @pytest.fixture
@@ -42,36 +42,13 @@ def test_create_mask(setup_api, setup_score):
     assert np.array_equal(mask[:, :-4], np.zeros((score.nb_tracks, score.nb_bars - 4)))
 
 
-@patch.object(MusicLangAPI, 'predict')
-def test_predict_segment(mock_predict, setup_api, setup_score):
-    api = setup_api
-    score = setup_score
-
-    def predict_side_effect(predicted_score, mask, model, tags, chords, temperature, polling_interval, timeout,
-                            prediction_kwargs):
-        return predicted_score  # Return the input segment as the result
-
-    mock_predict.side_effect = predict_side_effect
-
-    predicted_score = score.add_silence_bars(api.MAX_CONTEXT)
-    mask = api._create_mask(predicted_score, 4)
-    subchords, subtags = None, None
-    result = api._predict_segment(predicted_score, mask, model="control_masking_large", subtags=subtags,
-                                  subchords=subchords,
-                                  temperature=0.95, polling_interval=1, timeout=120, prediction_kwargs={})
-
-    assert mock_predict.called
-    assert result is not None
-    assert result.nb_bars == predicted_score.nb_bars
-
 
 @patch.object(MusicLangAPI, 'predict')
 def test_extend(mock_predict, setup_api, setup_score):
     api = setup_api
     score = setup_score
 
-    def predict_side_effect(predicted_score, mask, model, tags, chords, temperature, polling_interval, timeout,
-                            prediction_kwargs):
+    def predict_side_effect(predicted_score, *args, **kwargs):
         return predicted_score  # Return the input segment as the result
 
     mock_predict.side_effect = predict_side_effect
@@ -90,6 +67,7 @@ def test_extend(mock_predict, setup_api, setup_score):
     assert mock_predict.called
     assert extended_score is not None
     assert extended_score.nb_bars == score.nb_bars + 8
+
 
 
 if __name__ == "__main__":

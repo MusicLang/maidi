@@ -90,15 +90,14 @@ constrain the second bar of the bass track to use a quite high register:
     >>> from maidi import MidiScore, instrument
     >>> import maidi.chords_symbols as cs
     >>> from maidi.integrations.api import MusicLangAPI
-    >>> API_URL = os.getenv("API_URL")
-    >>> API_KEY = os.getenv("API_KEY")
+    >>> MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
     >>> score = MidiScore.from_empty(instruments=[instrument.PIANO, instrument.ACOUSTIC_BASS], nb_bars=5, ts=(4, 4), tempo=120)
     >>> mask, tags, chords = score.get_empty_controls(prevent_silence=True)
     >>> mask[:, :] = 1  # Regenerate everything in the score
     >>> for i in range(mask.shape[1]):
     ...     tags[0][i] = ['CONTROL_DENSITY__HIGH', 'CONTROL_MAX_POLYPHONY__1']
     >>> tags[1][1] = ['CONTROL_MIN_REGISTER__alto', 'CONTROL_MAX_REGISTER__alto']
-    >>> api = MusicLangAPI(API_URL, API_KEY, verbose=True)
+    >>> api = MusicLangAPI(MUSICLANG_API_KEY, verbose=True)
     >>> predicted_score = api.predict(score, mask=mask, tags=tags, chords=chords, async_mode=False, polling_interval=3)
     >>> predicted_score.write("predicted_score.mid")
 

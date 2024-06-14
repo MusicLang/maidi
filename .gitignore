@@ -26,3 +26,4 @@ build/
 *.egg
 *.egg-info
 docs/auto_examples/
+.coverage

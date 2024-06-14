@@ -18,7 +18,7 @@ Here is an example of how to generate a 4 bars drum and bass idea with the Music
     >>> from maidi import instrument
     >>> from maidi.integrations.api import MusicLangAPI
     >>> import os
-    >>> api = MusicLangAPI(api_key=os.getenv("API_KEY"), verbose=True)
+    >>> api = MusicLangAPI(api_key=os.getenv("MUSICLANG_API_KEY"), verbose=True)
     >>> instruments = [instrument.DRUMS, instrument.ELECTRIC_BASS_FINGER]
     >>> nb_bars = 4
     >>> time_signature = (4, 4)
