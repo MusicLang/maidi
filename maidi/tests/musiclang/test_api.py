@@ -8,12 +8,6 @@ from maidi import instrument
 import os
 
 
-MUSICLANG_API_KEY = "testapikey"
-
-
-@pytest.fixture
-def setup_api():
-    return MusicLangAPI(api_key=MUSICLANG_API_KEY, verbose=True)
 
 
 @pytest.fixture
@@ -22,6 +16,12 @@ def setup_score():
     score = MidiScore.from_empty(instruments=instruments, nb_bars=8, ts=(4, 4), tempo=120)
     return score
 
+MUSICLANG_API_KEY = "testapikey"
+
+
+@pytest.fixture
+def setup_api():
+    return MusicLangAPI(api_key=MUSICLANG_API_KEY, verbose=True)
 
 def test_init_api_with_env(setup_score):
     # Set API key in environment variable

@@ -283,6 +283,11 @@ class MusicLangAPI(MidiApiIntegration):
         """
 
         score_to_predict = score.copy()
+
+        from maidi import TagManager
+        if isinstance(tags, TagManager):
+            tags = tags.tags
+
         mask = self.check_parameters(score_to_predict,
                          mask=mask,
                          model=model,

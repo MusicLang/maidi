@@ -3,7 +3,6 @@ import numpy as np
 from fractions import Fraction as frac
 from symusic import Track, TimeSignature, Note, Score, Tempo
 import time
-
 from maidi.chords.chord_inference import fast_chord_inference
 
 
@@ -41,7 +40,7 @@ class Parser:
         self.min_dur = min_dur
         self.verbose = verbose
 
-    def parse(self, midi_file, chord_range=None):
+    def parse(self, midi_file, chord_range=None, force_ts=None):
         """
 
         Parameters
@@ -52,6 +51,9 @@ class Parser:
         chord_range : tuple or None (Default value = None)
             Tuple with the start and end chord index to parse. If None, parse the whole file
 
+        force_ts : tuple or None (Default value = None)
+            Tuple with the time signature to force for the whole file. If None, use the time signature of the midi file
+
         Returns
         -------
         chords : list
@@ -60,6 +62,7 @@ class Parser:
             Dict of arrays with the notes for each track
         track_keys : list
             List of tuples with the track keys (program, is_drum, voice)
+
 
         """
         start = time.time()
@@ -70,7 +73,7 @@ class Parser:
 
         self.pprint("Resampling time: ", time.time() - start)
         start = time.time()
-        bars, chord_durations = self._get_bars(score_quantized)
+        bars, chord_durations = self._get_bars(score_quantized, force_ts)
         self.pprint("Getting bars time: ", time.time() - start)
         tracks = {}
         track_keys = []
@@ -79,7 +82,6 @@ class Parser:
 
         if chord_range is None:
             chord_range = (0, len(bars))
-
 
         for idx, track in enumerate(score_quantized.tracks):
             is_drum = track.is_drum
@@ -163,13 +165,16 @@ class Parser:
             score.tracks.append(track)
         return score
 
-    def _get_bars(self, score):
+    def _get_bars(self, score, force_ts=None):
         """
         Get the bars of a score
         Parameters
         ----------
         score : symusic.Score object
             The score to get the bars from
+
+        force_ts : tuple or None (Default value = None)
+            Tuple with the time signature to force for the whole file. If None, use the time signature of the midi file
 
         Returns
         -------
@@ -180,10 +185,14 @@ class Parser:
 
         """
         # Calculate bars
-        time_signatures = score.time_signatures
-        time_signatures = sorted(time_signatures, key=lambda x: x.time)
-        if len(time_signatures) == 0:
-            time_signatures = [TimeSignature(0, 4, 4)]
+        if force_ts is not None:
+            time_signatures = [TimeSignature(0, force_ts[0], force_ts[1])]
+        else:
+            time_signatures = score.time_signatures
+            time_signatures = sorted(time_signatures, key=lambda x: x.time)
+            if len(time_signatures) == 0:
+                time_signatures = [TimeSignature(0, 4, 4)]
+
         ticks_per_quarter = score.ticks_per_quarter
         chord_durations = []
         time = 0
@@ -205,7 +214,7 @@ class Parser:
         ----------
         note_times : dict
             Dictionary with time key containing the note times
-            
+
         bars : list
             List of tuples with the start and end time of each bar in ticks
 
@@ -223,7 +232,7 @@ class Parser:
         # Use broadcasting to find which bar each note belongs to
         # Note times are broadcast across the start and end times of bars to create a 2D boolean array
         in_bar = (note_times["time"][:, None] >= start_times) & (
-            note_times["time"][:, None] < end_times
+                note_times["time"][:, None] < end_times
         )
 
         # Get the bar indices for each note. The result is a 2D array where each row has a single True value
@@ -244,7 +253,7 @@ class Parser:
         ----------
         bar_start : int
             The start of the bar in ticks
-            
+
         time_signatures : list
             List of time signatures for the score
 
@@ -263,7 +272,7 @@ class Parser:
 
         """
         # Find time signature
-        # We use a tolrance of one quarter note to find the time signature
+        # We use a tolerance of one quarter note to find the time signature
         res = [
             ts
             for ts in time_signatures
@@ -278,16 +287,20 @@ class Parser:
 
     def _groupby_bar(self, score_soa, bars):
         """
+        Group SOA by bar
 
         Parameters
         ----------
-        score_soa :
-            
-        bars :
-            
+        score_soa : dict
+            Dict of arrays with the notes for each track
+
+        bars : list
+            List of tuples with the start and end time of each bar in ticks
 
         Returns
         -------
+        result : list
+            List of dicts with the grouped notes for each bar
 
         """
         # Group SOA by bar
@@ -302,19 +315,16 @@ class Parser:
 
     def pprint(self, *text):
         """
+        Print debug information if verbose is True
 
         Parameters
         ----------
         *text :
-            
-
-        Returns
-        -------
+            Text to print
 
         """
         if self.verbose:
             print(*text)
-
 
     def _preload_score(self, midi_file):
         """
@@ -324,7 +334,7 @@ class Parser:
         ----------
         midi_file : str
             Path to the midi file to parse
-            
+
 
         Returns
         -------
@@ -332,8 +342,6 @@ class Parser:
             The quantized score object
 
         """
-
         score = symusic.Score(midi_file, ttype="tick")
         score_quantized = score.resample(tpq=self.tpq, min_dur=self.min_dur)
         return score_quantized
-

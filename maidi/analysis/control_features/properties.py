@@ -33,6 +33,8 @@ class Density(TagsCategory):
     high = 'CONTROL_DENSITY__HIGH'
     very_high = 'CONTROL_DENSITY__VERY_HIGH'
 
+    ALL = [lowest, lower, low, medium_low, medium, high, very_high]
+
 class MinRegister(TagsCategory):
 
     lowest = 'CONTROL_MIN_REGISTER__lowest'
