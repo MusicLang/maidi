@@ -66,4 +66,5 @@ class ScoreTagger:
                 track_tags.append(bar_tags)
             tags.append(track_tags)
 
-        return tags
+        from maidi import TagManager
+        return TagManager(tags)

@@ -357,7 +357,7 @@ class MidiScore:
     def get_track_bar(self, idx_track, idx_bar):
         return self.tracks[self.track_keys[idx_track]][idx_bar]
 
-    def get_chords_prompt(self):
+    def get_chords(self):
         """
         Return the list of chords in the score in the format [(chord_degree, tonality, mode, chord extension), ...]
 
@@ -375,6 +375,7 @@ class MidiScore:
         """
         kept_indexes = [self.SCALE_DEGREE_INDEX, self.TONALITY_INDEX, self.MODE_INDEX, self.CHORD_EXTENSION_INDEX]
         return [[bar[index] for index in kept_indexes] for bar in self.bars]
+
     def get_bars(self, item):
         """
         Get the bars between the start and end index

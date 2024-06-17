@@ -59,7 +59,7 @@ pip install git+https://github.com/MusicLang/maidi.git
 Usage
 -----
 
-A simple code snippet to load and analyze a midi file : 
+A simple code snippet to load and analyze a midi file :
 
 ```python
 from maidi import MidiScore, ScoreTagger, midi_library
@@ -77,7 +77,7 @@ tagger = ScoreTagger(
 )
 
 tags = tagger.tag_score(score)
-chords = score.get_chords_prompt()
+chords = score.get_chords()
 print(tags)
 print(chords)
 ```
@@ -177,14 +177,14 @@ tagger = ScoreTagger(
     ]
 )
 tags = tagger.tag_score(score)
-chords = score.get_chords_prompt()
+chords = score.get_chords()
 mask = score.get_mask()
 mask[:, :] = 1  # Regenerate everything in the score
 
 api = MusicLangAPI(api_key=MUSICLANG_API_KEY, verbose=True)
 predicted_score = api.predict(score,
-    mask, async_mode=False, polling_interval=3
-)
+                              mask, async_mode=False, polling_interval=3
+                              )
 predicted_score.write("predicted_score.mid")
 ```
 

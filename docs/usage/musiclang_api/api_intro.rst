@@ -78,6 +78,27 @@ Just set your API_URL and MUSICLANG_API_KEY in the environment (or get one `here
 .. doctest::
 
     >>> import os
+        >>> MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
+        >>> from maidi import MidiScore, ScoreTagger, midi_library
+        >>> from maidi.analysis import tags_providers
+        >>> from maidi.integrations.api import MusicLangAPI
+        >>> score = MidiScore.from_midi(midi_library.get_midi_file('example1'))
+        >>> score = score[0, :4]
+        >>> tagger = ScoreTagger([
+        ...     tags_providers.DensityTagsProvider(),
+        ...     tags_providers.MinMaxPolyphonyTagsProvider(),
+        ...     tags_providers.MinMaxRegisterTagsProvider(),
+        ...     tags_providers.SpecialNotesTagsProvider(),
+        ... ])
+        >>> tags = tagger.tag_score(score)
+        >>> chords = score.get_chords()
+        >>> mask = score.get_mask()
+        >>> mask[:, :] = 1  # Regenerate everything in the score
+        >>> api = MusicLangAPI(MUSICLANG_API_KEY, verbose=True)
+        >>> predicted_score = api.predict(score, mask, async_mode=False, polling_interval=3)
+        >>> predicted_score.write("predicted_score.mid")
+
+    For more details on the API, please refer to the
     >>> MUSICLANG_API_KEY = os.getenv("MUSICLANG_API_KEY")
     >>> from maidi import MidiScore, ScoreTagger, midi_library
     >>> from maidi.analysis import tags_providers
