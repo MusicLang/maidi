@@ -89,7 +89,7 @@ class MidiScore:
         self.kwargs = kwargs
 
     @classmethod
-    def from_midi(cls, midi_file, tpq=24, bar_range=None):
+    def from_midi(cls, midi_file, tpq=24, bar_range=None, force_ts=None):
         """
 
         Parameters
@@ -108,7 +108,7 @@ class MidiScore:
         from maidi.parser import Parser
 
         parser = Parser(tpq=tpq)
-        bars, tracks, track_keys, tempo = parser.parse(midi_file)
+        bars, tracks, track_keys, tempo = parser.parse(midi_file, force_ts=force_ts)
         score = cls(bars, tracks, track_keys, tempo, tpq=tpq)
         if bar_range is not None:
             score = score.get_score_between(*bar_range)
@@ -991,6 +991,56 @@ class MidiScore:
         """
         from maidi.constants import REVERSE_INSTRUMENT_DICT
         return [REVERSE_INSTRUMENT_DICT[(track_key[1], track_key[2])] for track_key in self.track_keys]
+
+
+    def dilate_time(self, factors):
+        """
+        Dilate the time of the notes in the score to match the time signature of the score
+
+        Parameters
+        ----------
+        factor : float or list of float
+            Factor to dilate the time of the notes, if a list is provided, the factors are applied to each bar
+        """
+
+        score = self.copy()
+        for track_key in score.track_keys:
+            for bar in range(len(score.bars)):
+                factor = factors if isinstance(factors, (int, float)) else factors[bar]
+                track = score.tracks[track_key][bar]
+                track["time"] = (track["time"] * factor).astype(np.int32)
+                track["duration"] = (track["duration"] * factor).astype(np.int32)
+        return score
+
+    def change_ts(self, new_ts, dilate_time=True):
+        """
+        Change the time signature of the score
+
+        Parameters
+        ----------
+
+        new_ts : tuple
+            New time signature of the score
+        dilate_time : bool (Default value = True)
+            If True, dilate the time of the notes to match the new time signature
+
+        """
+
+        score = self.copy()
+        dilate_factors = []
+        new_bars = []
+        for idx_bar, bar in enumerate(score.bars):
+            original_bar_duration = self._get_bar_duration_from_bar(bar, score.tpq)
+            new_bar = list(bar)
+            new_bar[self.TIME_SIGNATURE_NUMERATOR_INDEX] = new_ts[0]
+            new_bar[self.TIME_SIGNATURE_DENOMINATOR_INDEX] = new_ts[1]
+            new_bars.append(tuple(new_bar))
+            new_bar_duration = self._get_bar_duration_from_bar(new_bar, score.tpq)
+            dilate_factors.append(new_bar_duration / original_bar_duration)
+        score.bars = new_bars
+        if dilate_time:
+            score = score.dilate_time(dilate_factors)
+        return score
 
     @classmethod
     def from_empty(cls, instruments, nb_bars, ts=(4, 4), tempo=120, tpq=24, add_fake_notes=True):
