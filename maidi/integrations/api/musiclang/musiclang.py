@@ -180,6 +180,7 @@ class MusicLangAPI(MidiApiIntegration):
                          polling_interval=1,
                          tags=None,
                          chords=None,
+                         **kwargs
                          ):
         """
 
