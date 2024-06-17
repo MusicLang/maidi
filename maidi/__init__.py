@@ -4,4 +4,4 @@ from .score import MidiScore
 from .analysis import TagsProvider, ScoreTagger, TagManager, Tags
 
 
-__version__ = "0.12.18"
+__version__ = "0.12.19"
