@@ -22,6 +22,6 @@ tagger = ScoreTagger(
 )
 
 tags = tagger.tag_score(score)
-chords = score.get_chords_prompt()
+chords = score.get_chords()
 print(tags)
 print(chords)

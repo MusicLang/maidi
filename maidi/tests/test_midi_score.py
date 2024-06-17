@@ -375,7 +375,7 @@ def test_get_chords_prompts():
         tempo=120
     )
 
-    chord_prompt = score.get_chords_prompt()
+    chord_prompt = score.get_chords()
     assert len(chord_prompt) == 4
     assert len(chord_prompt[0]) == 4
 

@@ -3,7 +3,7 @@ Create a song in async mode
 ======================================================
 
 In this example :
-- We do the same example that 02_generate_from_scratch.py but in async mode
+- We do the same example that 03_generate_from_scratch.py but in async mode
 - We poll the API until the prediction is done every 3 seconds
 
 """

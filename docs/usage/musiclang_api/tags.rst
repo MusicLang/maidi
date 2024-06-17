@@ -122,7 +122,18 @@ The following example shows how to extract the tags from a given score:
     ...     tags_providers.SpecialNotesTagsProvider(),
     ... ])
     >>> tags = tagger.tag_score(score)
-    >>> chords = score.get_chords_prompt()
+    >>> chords = score.get_chords()
+    >>> from maidi import MidiScore, midi_library
+    >>> from maidi.analysis import ScoreTagger
+    >>> score = MidiScore.from_midi(midi_library.get_midi_file('drum_and_bass'))
+    >>> tagger = ScoreTagger([
+    ...     tags_providers.DensityTagsProvider(),
+    ...     tags_providers.MinMaxPolyphonyTagsProvider(),
+    ...     tags_providers.MinMaxRegisterTagsProvider(),
+    ...     tags_providers.SpecialNotesTagsProvider(),
+    ... ])
+    >>> tags = tagger.tag_score(score)
+    >>> chords = score.get_chords()
 
 
 

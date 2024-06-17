@@ -38,7 +38,7 @@ def test_basic_density_tags_with_score_tagger():
         ])
 
         score = MidiScore.from_midi(f.name)
-        tags = score_tagger.tag_score(score)
+        tags = score_tagger.tag_score(score).tags
 
         assert len(tags) == 2
         assert len(tags[0]) == 2
@@ -54,5 +54,5 @@ def test_empty_score_lead_to_0_polyphony():  # Check that tagger remove low velo
     )
 
     tags = tagger.tag_score(score)
-    assert 'CONTROL_MAX_POLYPHONY__0' in tags[0][0]
-    assert 'CONTROL_MIN_POLYPHONY__0' in tags[0][0]
+    assert 'CONTROL_MAX_POLYPHONY__0' in tags.tags[0][0]
+    assert 'CONTROL_MIN_POLYPHONY__0' in tags.tags[0][0]
