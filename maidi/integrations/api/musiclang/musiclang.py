@@ -237,6 +237,7 @@ class MusicLangAPI(MidiApiIntegration):
 
         """
 
+        mask = np.asarray(mask)
         if model not in models.MODELS:
             raise ValueError(f"Model {model} not existing. Models available : {models.MODELS}")
         if temperature > 1.0:
@@ -262,7 +263,6 @@ class MusicLangAPI(MidiApiIntegration):
             raise ValueError(f'Wrong number of chords (chords) :{len(chords)} (score) : {score.nb_bars}')
 
         score_to_predict = score.copy()
-        mask = np.asarray(mask)
         score_to_predict.check_mask(mask)
         result = self._predict_with_api(
             score_to_predict,
