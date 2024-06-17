@@ -176,17 +176,15 @@ class MusicLangAPI(MidiApiIntegration):
                          score,
                          mask,
                          model=models.MODEL_CONTROL_MASKING_LARGE,
-                         timeout=120,
                          temperature=0.95,
-                         cut_silenced_bars=False,
-                         regen_missing_bars=False,
-                         async_mode=False,
                          polling_interval=1,
                          tags=None,
                          chords=None,
-                         **prediction_kwargs,
-
                          ):
+        """
+
+
+        """
 
         mask = np.asarray(mask)
         if model not in models.MODELS:
@@ -284,7 +282,13 @@ class MusicLangAPI(MidiApiIntegration):
         """
 
         score_to_predict = score.copy()
-        mask = self.check_parameters(score_to_predict, mask, model, timeout, temperature, cut_silenced_bars, regen_missing_bars, async_mode, polling_interval, tags, chords, **prediction_kwargs)
+        mask = self.check_parameters(score_to_predict,
+                         mask=mask,
+                         model=model,
+                         temperature=temperature,
+                         polling_interval=polling_interval,
+                         tags=tags,
+                         chords=chords)
 
         result = self._predict_with_api(
             score_to_predict,
