@@ -172,6 +172,52 @@ class MusicLangAPI(MidiApiIntegration):
 
         return self.predict(score, mask, model=model, temperature=temperature, chords=chords, tags=tags, **kwargs)
 
+    def check_parameters(self,
+                         score,
+                         mask,
+                         model=models.MODEL_CONTROL_MASKING_LARGE,
+                         timeout=120,
+                         temperature=0.95,
+                         cut_silenced_bars=False,
+                         regen_missing_bars=False,
+                         async_mode=False,
+                         polling_interval=1,
+                         tags=None,
+                         chords=None,
+                         **prediction_kwargs,
+
+                         ):
+
+        mask = np.asarray(mask)
+        if model not in models.MODELS:
+            raise ValueError(f"Model {model} not existing. Models available : {models.MODELS}")
+        if temperature > 1.0:
+            raise ValueError("Temperature must be lower than 1.0")
+        if polling_interval < 0:
+            raise ValueError("Polling interval must be > 0")
+        if score.nb_bars > MusicLangAPI.MAX_CONTEXT:
+            raise ValueError(f"The prompted score must be less than {MusicLangAPI.MAX_CONTEXT} bars.")
+
+        if tags is not None:
+            self._check_tags_exists(tags)
+
+        if score.nb_bars != mask.shape[1]:
+            raise ValueError(f'Wrong number of bars in the mask, (score) : {score.nb_bars} (mask): {mask.shape[1]}')
+
+        if score.nb_tracks != mask.shape[0]:
+            raise ValueError(f'Wrong number of tracks in the mask, (score) : {score.nb_tracks} (mask): {mask.shape[0]}')
+
+        if chords is not None:
+            self._check_chords_exists(chords)
+
+        if chords is not None and (len(chords) != score.nb_bars):
+            raise ValueError(f'Wrong number of chords (chords) :{len(chords)} (score) : {score.nb_bars}')
+
+        score.check_mask(mask)
+
+        return mask
+
+
     def predict(
             self,
             score,
@@ -237,33 +283,9 @@ class MusicLangAPI(MidiApiIntegration):
 
         """
 
-        mask = np.asarray(mask)
-        if model not in models.MODELS:
-            raise ValueError(f"Model {model} not existing. Models available : {models.MODELS}")
-        if temperature > 1.0:
-            raise ValueError("Temperature must be lower than 1.0")
-        if polling_interval < 0:
-            raise ValueError("Polling interval must be > 0")
-        if score.nb_bars > MusicLangAPI.MAX_CONTEXT:
-            raise ValueError(f"The prompted score must be less than {MusicLangAPI.MAX_CONTEXT} bars.")
-
-        if tags is not None:
-            self._check_tags_exists(tags)
-
-        if score.nb_bars != mask.shape[1]:
-            raise ValueError(f'Wrong number of bars in the mask, (score) : {score.nb_bars} (mask): {mask.shape[1]}')
-
-        if score.nb_tracks != mask.shape[0]:
-            raise ValueError(f'Wrong number of tracks in the mask, (score) : {score.nb_tracks} (mask): {mask.shape[0]}')
-
-        if chords is not None:
-            self._check_chords_exists(chords)
-
-        if chords is not None and (len(chords) != score.nb_bars):
-            raise ValueError(f'Wrong number of chords (chords) :{len(chords)} (score) : {score.nb_bars}')
-
         score_to_predict = score.copy()
-        score_to_predict.check_mask(mask)
+        mask = self.check_parameters(score_to_predict, mask, model, timeout, temperature, cut_silenced_bars, regen_missing_bars, async_mode, polling_interval, tags, chords, **prediction_kwargs)
+
         result = self._predict_with_api(
             score_to_predict,
             mask,
