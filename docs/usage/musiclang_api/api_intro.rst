@@ -112,7 +112,7 @@ Just set your API_URL and MUSICLANG_API_KEY in the environment (or get one `here
     ...     tags_providers.SpecialNotesTagsProvider(),
     ... ])
     >>> tags = tagger.tag_score(score)
-    >>> chords = score.get_chords_prompt()
+    >>> chords = score.get_chords()
     >>> mask = score.get_mask()
     >>> mask[:, :] = 1  # Regenerate everything in the score
     >>> api = MusicLangAPI(MUSICLANG_API_KEY, verbose=True)
