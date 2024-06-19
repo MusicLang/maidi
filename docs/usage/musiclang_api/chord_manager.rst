@@ -12,9 +12,9 @@ Example Chord Progression::
 
 .. doctest::
 
-    >>> from maidi.analysis.chord_analyzer import parse_roman_numeral_notation
+    >>> from maidi import ChordManager
     >>> input_string = "C: #iv6 ii%6 V6/V Ger6 N V[add9]/ii ii64 V7 I c: i vii%7 iio d#: V VI VII iii65 i(sus2) Fr65"
-    >>> result = parse_roman_numeral_notation(input_string)
+    >>> result = ChordManager.from_roman_string(input_string)
 
 
 Tonalities
