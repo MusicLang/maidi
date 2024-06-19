@@ -110,8 +110,18 @@ class MidiScore:
         parser = Parser(tpq=tpq)
         bars, tracks, track_keys, tempo = parser.parse(midi_file, force_ts=force_ts)
         score = cls(bars, tracks, track_keys, tempo, tpq=tpq)
+
         if bar_range is not None:
             score = score.get_score_between(*bar_range)
+        return score
+
+    def cut_silence_bars_at_end(self):
+        """
+        Cut the silence bars at the end of the score
+        """
+        score = self.copy()
+        while score.is_bar_empty(-1, keep_ghost_note=True):
+            score = score.delete_bar(-1)
         return score
 
     @property
@@ -357,7 +367,47 @@ class MidiScore:
     def get_track_bar(self, idx_track, idx_bar):
         return self.tracks[self.track_keys[idx_track]][idx_bar]
 
-    def get_chords(self):
+    def is_bar_empty(self, bar_index, keep_ghost_note=False):
+        """
+        Check if a bar is empty
+
+        Parameters
+        ----------
+        bar_index : int
+            Index of the bar to check
+        keep_ghost_note : bool
+            If True, ghost note counts as note in the check
+
+        """
+        return all(self.is_bar_track_empty(track_index, bar_index, keep_ghost_note=keep_ghost_note) for track_index in range(self.nb_tracks))
+
+
+    def is_bar_track_empty(self, track_index, bar_index, keep_ghost_note=False):
+        """
+        Check if a bar is empty
+
+        Parameters
+        ----------
+        track_index : int
+            Index of the track
+        bar_index : int
+            Index of the bar to check
+        keep_ghost_note : bool
+            If True, ghost note counts as note in the check
+
+        """
+        no_notes = len(self.tracks[self.track_keys[track_index]][bar_index]["time"]) == 0
+        if not no_notes:
+            if not keep_ghost_note:
+                only_ghost_notes = self.tracks[self.track_keys[track_index]][bar_index]["velocity"].max() < self.MINIMUM_VELOCITY
+                if only_ghost_notes:
+                    return True
+        else:
+            return True
+
+        return False
+
+    def get_chords(self, use_last_chord_for_silence=True):
         """
         Return the list of chords in the score in the format [(chord_degree, tonality, mode, chord extension), ...]
 
@@ -367,6 +417,12 @@ class MidiScore:
         Chord extension : str, extension of the chord as in roman numeral notation, in ['', ',6', '64', '7', '65', '43', '2']
         Optionally you can use (sus2) or (sus4) for suspended chords
 
+        Parameters
+        ----------
+        use_last_chord_for_silence : bool
+            If True, use the last chord played for silenced bars, otherwise return None
+
+
         Returns
         -------
         chords: list of tuple
@@ -374,7 +430,18 @@ class MidiScore:
 
         """
         kept_indexes = [self.SCALE_DEGREE_INDEX, self.TONALITY_INDEX, self.MODE_INDEX, self.CHORD_EXTENSION_INDEX]
-        return [[bar[index] for index in kept_indexes] for bar in self.bars]
+        chords = []
+        last_chord = None
+        for bar in range(len(self.bars)):
+            chord = tuple([self.bars[bar][idx] for idx in kept_indexes])
+            if self.is_bar_empty(bar):
+                if use_last_chord_for_silence:
+                    chord = last_chord
+                else:
+                    chord = None
+            chords.append(chord)
+            last_chord = chord
+        return chords
 
     def get_bars(self, item):
         """

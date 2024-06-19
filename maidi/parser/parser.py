@@ -197,7 +197,8 @@ class Parser:
         chord_durations = []
         time = 0
         bars = []
-        while time < score.end():
+        max_note_onset = max([n.time for t in score.tracks for n in t.notes])
+        while time <= max_note_onset:
             start_time = time
             end_time, num, den = self._get_end_of_bar(
                 time, time_signatures, ticks_per_quarter

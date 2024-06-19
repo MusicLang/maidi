@@ -51,6 +51,18 @@ class ScoreTagger:
         return new_track_bar
 
 
+    @classmethod
+    def get_base_tagger(cls):
+        from maidi.analysis import tags_providers
+        return ScoreTagger(
+            [
+                tags_providers.DensityTagsProvider(),
+                tags_providers.MinMaxRegisterTagsProvider(),
+                tags_providers.SpecialNotesTagsProvider(),
+                tags_providers.MinMaxPolyphonyTagsProvider(),
+            ]
+        )
+
     def tag_score(self, score):
         tags = []
 

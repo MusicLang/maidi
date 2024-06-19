@@ -1,6 +1,5 @@
 
-
-
+from copy import deepcopy
 class TagManager:
 
     def __init__(self, tags):
@@ -12,7 +11,10 @@ class TagManager:
         tags : list[list[list[str]]]
             The tags
         """
-        self.tags = tags
+        if isinstance(tags, TagManager):
+            self.tags = deepcopy(tags.tags)
+        else:
+            self.tags = deepcopy(tags)
 
     @classmethod
     def empty_from_score(cls, score):
@@ -33,6 +35,25 @@ class TagManager:
         tags = [[[] for _ in range(shape[1])] for _ in range(shape[0])]
         return cls(tags)
 
+    @classmethod
+    def from_chord_manager(cls, chord_manager, nb_tracks):
+        """
+        Create a tag manager from a score and a chord manager
+
+        Parameters
+        ----------
+        chord_manager : ChordManager
+            The chord manager in which to extract tags associated to chord progression
+        nb_tracks : int
+            The number of tracks
+        """
+        tags = [[[] for _ in range(len(chord_manager))] for _ in range(nb_tracks)]
+        for idx_track in range(nb_tracks):
+            for idx_bar in range(len(chord_manager)):
+                tags[idx_track][idx_bar] = chord_manager.chords[idx_bar][4]
+        return cls(tags)
+
+
     def add_tag(self, tag):
         """
         Add a tag
@@ -47,6 +68,17 @@ class TagManager:
         None
         """
         return self.add_tags([tag])
+
+
+    def __repr__(self):
+        repr = ""
+        for idx_track, track in enumerate(self.tags):
+            repr += f"Track {idx_track} \n"
+            for bar_idx, bar in enumerate(track):
+                repr += f" Bar {bar_idx} : " + str(bar) + "\n"
+            repr += "\n"
+        return repr
+
 
     def add_tags(self, tags):
         """
@@ -280,6 +312,56 @@ class TagManager:
         """
         self.remove_tags_for_bar([tag], bar_index)
 
+
+    def clear_tags(self):
+        """
+        Clear all tags
+        """
+        for track in self.tags:
+            for bar in track:
+                bar.clear()
+
+    def clear_tags_for_track(self, track_index):
+        """
+        Clear all tags for a specific track
+
+        Parameters
+        ----------
+        track_index : int
+            The track index
+
+        """
+        for bar in self.tags[track_index]:
+            bar.clear()
+
+    def clear_tags_for_bar(self, bar_index):
+        """
+        Clear all tags for a specific bar
+
+        Parameters
+        ----------
+        bar_index : int
+            The bar index
+
+        """
+        for track in self.tags:
+            track[bar_index].clear()
+
+    def clear_tags_at_index(self, track_index, bar_index):
+        """
+        Clear all tags at a specific index
+
+        Parameters
+        ----------
+        track_index : int
+            The track index
+        bar_index : int
+            The bar index
+
+        """
+        self.tags[track_index][bar_index].clear()
+
+
     @property
     def shape(self):
         """
@@ -292,6 +374,25 @@ class TagManager:
         Get the length of the tag manager (corresponding to the number of tracks)
         """
         return len(self.tags)
+
+    def get_tags_at_index(self, track_index, bar_index):
+        """
+        Get the tags at a specific index
+
+        Parameters
+        ----------
+        track_index : int
+            The track index
+        bar_index : int
+            The bar index
+
+        Returns
+        -------
+        list[str]
+            The tags at the specified index
+
+        """
+        return self.tags[track_index][bar_index]
 
     def __getitem__(self, item):
         """
@@ -321,6 +422,7 @@ class TagManager:
                 return TagManager([track[second_dim] for track in tags_first_dim])
             if isinstance(second_dim, int):
                 return TagManager([[track[second_dim]] for track in tags_first_dim])
+
 
     def __setitem__(self, item, value):
         """
@@ -379,6 +481,9 @@ class TagManager:
             elif isinstance(value, str):
                 for i in range(*item.indices(len(self.tags))):
                     self.tags[i] = [[value] for _ in range(len(self.tags[i]))]
+            elif value is None:
+                for i in range(*item.indices(len(self.tags))):
+                    self.tags[i] = [[] for _ in range(len(self.tags[i]))]
             elif isinstance(value, list):
                 if all(isinstance(v, str) for v in value):
                     for i in range(*item.indices(len(self.tags))):
@@ -442,6 +547,9 @@ class TagManager:
                     elif isinstance(value, str):
                         for i in range(*first_dim.indices(len(self.tags))):
                             self.tags[i][second_dim] = [value]
+                    elif value is None:
+                        for i in range(*first_dim.indices(len(self.tags))):
+                            self.tags[i][second_dim] = []
                     elif isinstance(value, list) and all(isinstance(v, str) for v in value):
                         for i in range(*first_dim.indices(len(self.tags))):
                             self.tags[i][second_dim] = value
@@ -460,6 +568,10 @@ class TagManager:
                         for i in range(*first_dim.indices(len(self.tags))):
                             for j in range(*second_dim.indices(len(self.tags[i]))):
                                 self.tags[i][j] = [value]
+                    elif value is None:
+                        for i in range(*first_dim.indices(len(self.tags))):
+                            for j in range(*second_dim.indices(len(self.tags[i]))):
+                                self.tags[i][j] = []
                     elif isinstance(value, list):
                         if all(isinstance(v, str) for v in value):
                             for i in range(*first_dim.indices(len(self.tags))):

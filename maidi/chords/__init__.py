@@ -1,0 +1,1 @@
+from .chord_manager import ChordManager

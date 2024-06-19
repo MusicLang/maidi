@@ -30,6 +30,26 @@ def create_fake_midi_file(filename):
         # Write out the MIDI data
     midi_data.write(filename)
 
+
+def test_cut_silence_empty():
+    score = MidiScore.from_empty(
+        instruments=[instrument.PIANO, instrument.VIOLIN],
+        nb_bars=3,
+        ts=(4, 4),
+        tempo=120
+    )
+    assert score.cut_silence_bars_at_end().shape == (2, 3)
+
+def test_bar_is_empty_ghost_notes():
+    score = MidiScore.from_empty(
+        instruments=[instrument.PIANO, instrument.VIOLIN],
+        nb_bars=3,
+        ts=(4, 4),
+        tempo=120
+    )
+    score.is_bar_empty(-1, keep_ghost_note=True)
+
+
 def test_empty_midi_score():
     """ """
     score = MidiScore.from_empty(
@@ -375,9 +395,13 @@ def test_get_chords_prompts():
         tempo=120
     )
 
+    score.add_note(60, 0, 10, 40, 0, 0)
+    score.add_note(64, 0, 10, 40, 0, 0)
+    score.add_note(67, 0, 10, 40, 0, 0)
+
     chord_prompt = score.get_chords()
     assert len(chord_prompt) == 4
-    assert len(chord_prompt[0]) == 4
+    assert chord_prompt[0] == (0, 0, 'M', '')
 
 
 def test_get_bars_int():

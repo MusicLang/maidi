@@ -277,16 +277,18 @@ class MusicLangAPI(MidiApiIntegration):
 
         Returns
         -------
-        type
+        score :
             MidiScore or str : predicted score if sync mode
 
         """
 
         score_to_predict = score.copy()
 
-        from maidi import TagManager
+        from maidi import TagManager, ChordManager
         if isinstance(tags, TagManager):
             tags = tags.tags
+        if isinstance(chords, ChordManager):
+            chords = chords.to_chords()
 
         mask = self.check_parameters(score_to_predict,
                          mask=mask,
