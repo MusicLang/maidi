@@ -1,4 +1,3 @@
-
 from maidi.analysis import TagsProvider
 
 

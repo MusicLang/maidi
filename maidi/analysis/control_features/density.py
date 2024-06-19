@@ -1,4 +1,3 @@
-from maidi import MidiScore
 from maidi.analysis import TagsProvider
 
 

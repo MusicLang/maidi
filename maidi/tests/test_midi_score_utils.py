@@ -78,3 +78,29 @@ def test_change_ts_with_dilate(setup_score):
         factor = dilate_factors[bar]
         assert np.array_equal(track["time"], (original_times[bar] * factor).astype(np.int32))
         assert np.array_equal(track["duration"], (original_durations[bar] * factor).astype(np.int32))
+
+
+
+def test_is_bar_track_empty(setup_score):
+    score = setup_score
+    for i in [1]:
+        for key in score.tracks[score.track_keys[0]][i].keys():
+            score.tracks[score.track_keys[0]][i][key] = np.array([])
+
+    score.add_note(pitch=60, time=0, duration=3, velocity=100, track_index=0, bar_index=2)
+    assert score.is_bar_track_empty(0, 1) == True # Empty bar
+    assert score.is_bar_track_empty(0, 0) == True # Ghost note
+    assert score.is_bar_track_empty(0, 2) == False # Normal note
+
+
+def test_is_bar_empty(setup_score):
+    score = setup_score.copy()
+    score = score.add_instrument(instrument.PIANO)
+    for i in [1]:
+        for key in score.tracks[score.track_keys[0]][i].keys():
+            score.tracks[score.track_keys[0]][i][key] = np.array([])
+
+    score.add_note(pitch=60, time=0, duration=3, velocity=100, track_index=0, bar_index=2)
+    assert score.is_bar_empty(1) == True  # Empty bar
+    assert score.is_bar_empty(0) == True  # Ghost note
+    assert score.is_bar_empty(2) == False  # Normal note
