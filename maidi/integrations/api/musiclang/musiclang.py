@@ -663,7 +663,8 @@ class MusicLangAPI(MidiApiIntegration):
             if result["status"] == "COMPLETED":
                 break
             elif result["status"] == "FAILED":
-                raise ValueError("Task failed")
+                error_message = result['error'] if 'error' in result else 'Unknown error'
+                raise ValueError(f"Task failed : {error_message}")
 
             self.pprint(f"Task {task_id} not completed yet, waiting {polling_interval} seconds")
             time.sleep(polling_interval)

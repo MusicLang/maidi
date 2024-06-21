@@ -407,6 +407,26 @@ class MidiScore:
 
         return False
 
+
+    def get_chord_manager(self, use_last_chord_for_silence=True):
+        """
+        Return a chord manager from the chords of the score
+
+        Parameters
+        ----------
+        use_last_chord_for_silence : bool
+            If True, use the last chord played for silenced bars, otherwise return None
+
+
+        Returns
+        -------
+        cm: ChordManager
+
+        """
+        from maidi import ChordManager
+        chords = self.get_chords(use_last_chord_for_silence=use_last_chord_for_silence)
+        return ChordManager(chords)
+
     def get_chords(self, use_last_chord_for_silence=True):
         """
         Return the list of chords in the score in the format [(chord_degree, tonality, mode, chord extension), ...]
@@ -431,14 +451,14 @@ class MidiScore:
         """
         kept_indexes = [self.SCALE_DEGREE_INDEX, self.TONALITY_INDEX, self.MODE_INDEX, self.CHORD_EXTENSION_INDEX]
         chords = []
-        last_chord = None
+        last_chord = (0, 0, "M", "")
         for bar in range(len(self.bars)):
             chord = tuple([self.bars[bar][idx] for idx in kept_indexes])
             if self.is_bar_empty(bar):
                 if use_last_chord_for_silence:
                     chord = last_chord
                 else:
-                    chord = None
+                    chord = (0, 0, "M", "")
             chords.append(chord)
             last_chord = chord
         return chords
@@ -652,7 +672,7 @@ class MidiScore:
             if current_ts != candidate_ts:
                 score.time_signatures.append(ts)
                 current_ts = (
-                    (ts.numerator, ts.denominator) if current_ts is None else current_ts
+                    (ts.numerator, ts.denominator)
                 )
 
         for track_key in self.track_keys:

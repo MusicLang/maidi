@@ -12,9 +12,9 @@ def get_tags_names():
 
     """
     return [
-        "CONTROL_MIN_POLYPHONY__" + str(i) for i in range(MAX_MIN_POLYPHONY)
+        "CONTROL_MIN_POLYPHONY__" + str(i) for i in range(MAX_MIN_POLYPHONY+1)
     ] + [
-        "CONTROL_MAX_POLYPHONY__" + str(i) for i in range(MAX_MAX_POLYPHONY)
+        "CONTROL_MAX_POLYPHONY__" + str(i) for i in range(MAX_MAX_POLYPHONY+1)
     ]
 
 
@@ -58,7 +58,7 @@ def get_max_polyphony(notes):
         elif event_type == "end":
             current_count -= 1
 
-    return max_count
+    return min(max_count, MAX_MAX_POLYPHONY)
 
 
 def get_min_polyphony(notes):
@@ -100,7 +100,7 @@ def get_min_polyphony(notes):
             current_count -= 1
 
     # If min_count was never updated, return 0, otherwise, return min_count
-    return min_count if min_count != float("inf") else 0
+    return min(min_count, MAX_MIN_POLYPHONY) if min_count != float("inf") else 0
 
 
 
