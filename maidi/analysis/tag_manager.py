@@ -54,6 +54,7 @@ class TagManager:
         return cls(tags)
 
 
+
     def add_tag(self, tag):
         """
         Add a tag

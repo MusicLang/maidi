@@ -29,7 +29,7 @@ class GenerationMetric:
         recalled_tags = 0
         total_tags = 0
         for i in range(len(self.new_tags)):
-            for j in range(len(self.new_tags[i])):
+            for j in range(len(self.new_tags.tags[i])):
                 new_tags_locals = self.new_tags.get_tags_at_index(i, j)
                 initial_tags_local = initial_tags.get_tags_at_index(i, j)
                 recalled_tags += len(set(new_tags_locals).intersection(initial_tags_local))
@@ -100,6 +100,36 @@ class GenerationMetric:
                     recall_report['chords'].append(self.chord_recall_for_index(j))
             recall_report['tags'].append(track_tags)
         return recall_report
+
+    def tag_and_chord_recalls(self):
+        """ Get for each tag and each chord the recall of the tags and chords in the predicted score. """
+        tags_dict_recall = {}  # key: tag, value: (nb_recalled, nb_total)
+        chords_dict_recall = {}  # key: chord, value: (nb_recalled, nb_total)
+
+        # Calculate tag recalls
+        for i in range(len(self.new_tags)):
+            for j in range(len(self.new_tags.tags[i])):
+                new_tags_locals = self.new_tags.get_tags_at_index(i, j)
+                initial_tags_local = self.tags.get_tags_at_index(i, j)
+                for tag in initial_tags_local:
+                    if tag not in tags_dict_recall:
+                        tags_dict_recall[tag] = [0, 0]
+                    tags_dict_recall[tag][1] += 1
+                    if tag in new_tags_locals:
+                        tags_dict_recall[tag][0] += 1
+
+        # Calculate chord recalls
+        for i in range(len(self.chords)):
+            initial_chord = self.chords[i]
+            new_chord = self.new_chords[i]
+            if initial_chord not in chords_dict_recall:
+                chords_dict_recall[initial_chord] = [0, 0]
+            chords_dict_recall[initial_chord][1] += 1
+            if initial_chord == new_chord:
+                chords_dict_recall[initial_chord][0] += 1
+
+        return tags_dict_recall, chords_dict_recall
+
 
 
     def chords_recall(self):
