@@ -51,3 +51,23 @@ We let the last bar unspecified for a total of 5 chords in the generation:
     >>> predicted_score.write("predicted_score.mid")
 
 With this example, MusicLang will generate a 5 bars piano score with the given chord/scale progression.
+
+
+Another example using directly roman numeral notation for the chords :
+
+.. doctest::
+
+    >>> from maidi import ChordManager, MusicLangAPI, MidiScore, instrument, Tags, ScoreTagger
+    >>> score = MidiScore.from_empty([instrument.FLUTE, instrument.PIANO], 8)
+    >>> chords_string = "c: IV/III ii/III VI/iv viio7 III V/III ii% V7"
+    >>> chords = ChordManager.from_roman_string(chords_string)
+    >>> mask, tags, _ = score.get_empty_controls()
+    >>> mask[:, :] = 1
+    >>> api = MusicLangAPI(api_url='https://api.dev.musiclang.io', verbose=False)
+    >>> predicted_score = api.predict(score,
+    ...                              mask,
+    ...                              model='control_masking_large',
+    ...                              chords=chords,
+    ...                              temperature=0.9,
+    ...                             )
+    >>> predicted_score.write('predicted_score.mid')

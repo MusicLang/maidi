@@ -186,7 +186,7 @@ class MusicLangAPI(MidiApiIntegration):
 
 
         """
-
+        from maidi import TagManager, ChordManager
         mask = np.asarray(mask)
         if model not in models.MODELS:
             raise ValueError(f"Model {model} not existing. Models available : {models.MODELS}")
@@ -198,6 +198,11 @@ class MusicLangAPI(MidiApiIntegration):
             raise ValueError(f"The prompted score must be less than {MusicLangAPI.MAX_CONTEXT} bars.")
 
         if tags is not None:
+            # Check with tag manager
+            tm = TagManager(tags)
+            if tm.shape != score.shape:
+                raise ValueError(f'Wrong shape for tags, (tags) : {tm.shape} (score) : {score.shape}')
+
             self._check_tags_exists(tags)
 
         if score.nb_bars != mask.shape[1]:
@@ -535,10 +540,29 @@ class MusicLangAPI(MidiApiIntegration):
         ValueError
             If the model is not recognized or if the input parameters are invalid.
         """
+        from maidi import TagManager, ChordManager
+        if isinstance(chords, ChordManager):
+            chords = chords.to_chords()
+        if isinstance(tags, TagManager):
+            tags = tags.tags
+        cm = ChordManager(chords) if chords is not None else None
+        tm = TagManager(tags) if tags is not None else None
+        if cm is not None:
+            # Check size
+            if len(cm) != nb_bars_added:
+                raise ValueError(f'Wrong number of chords (chords) :{len(cm)} (score) : {score.nb_bars}')
+        if tm is not None:
+            if tm.shape[0] != score.shape[0]:
+                raise ValueError(f'Wrong number of tracks in tags (tags) :{tm.shape[0]} (score) : {score.nb_tracks}')
+            if tm.shape[1] != nb_bars_added:
+                raise ValueError(f'Wrong number of bars in tags (tags) :{tm.shape[1]} (score) : {nb_bars_added}')
 
         new_score = score.copy()
         nb_bars_current = new_score.nb_bars
         offset_bar = 0
+
+        if nb_added_bars_step is None:
+            nb_added_bars_step = self.MAX_CONTEXT//2
 
         while new_score.nb_bars < (nb_bars_current + nb_bars_added):
             remaining_bars = (nb_bars_current + nb_bars_added) - new_score.nb_bars
@@ -553,12 +577,60 @@ class MusicLangAPI(MidiApiIntegration):
                                                                  mask.shape[1] - nb_added_bars_in_this_step)
 
             offset_bar += nb_added_bars_in_this_step
-            result_predicted_score = self.predict(predicted_score, mask, model, tags=subtags, chords=subchords,
-                                                           temperature=temperature, polling_interval=polling_interval,
-                                                  timeout=timeout, **prediction_kwargs)
+            result_predicted_score = self.predict(predicted_score, mask, model, tags=subtags, chords=subchords,temperature=temperature, polling_interval=polling_interval, timeout=timeout, **prediction_kwargs)
+            if result_predicted_score.nb_bars < mask.shape[1]:
+                print('stopping generation')
+                return new_score
+                #raise ValueError(f'Error in the API, the number of bars returned is less than the number of bars expected in the mask. Expected : {mask.shape[1]}, got : {result_predicted_score.nb_bars}')
             new_score = base_score.concatenate(result_predicted_score, axis=1)
 
         return new_score
+
+
+    def create_variation(self, midi_path, temperature=0.6, **predict_kwargs):
+        """
+        Create a variation of the given MIDI file using the MusicLang API.
+        The midi file can be of any length.
+        It will generate a score constrained by the tags and the chord progression of the original file
+        It can be useful if you want to generate new ideas from an existing piece of music.
+
+        Parameters
+        ------------
+
+        midi_path: str
+            The path of the midi file you want to create a variation on
+        temperature: float
+            The temperature for the model (default is 0.6)
+        **predict_kwargs:
+            Additional arguments to be passed to the predict method
+        """
+        from maidi import ScoreTagger
+        init_nb_bars = 16
+        full_score = MidiScore.from_midi(midi_path)
+        total_bars = full_score.nb_bars
+
+        chords = full_score.get_chord_manager(use_last_chord_for_silence=False)
+        tags = ScoreTagger.get_base_tagger().tag_score(full_score)
+
+        chords_init = chords[:init_nb_bars]
+        tags_init = tags[:, :init_nb_bars]
+        remaining_chords = chords[init_nb_bars:]
+        remaining_tags = tags[:, init_nb_bars:]
+
+        score = full_score.get_score_between(0, init_nb_bars)
+        mask = score.get_mask()
+        mask[:, :] = 1
+
+        predicted_score = self.predict(score, mask, model='control_masking_large',
+                                      temperature=temperature, tags=tags_init,
+                                      chords=chords_init,
+                                       **predict_kwargs
+                                      )
+        if total_bars - init_nb_bars > 0:
+            predicted_score = self.extend(predicted_score, (total_bars - init_nb_bars),
+                                         chords=remaining_chords,
+                                         tags=remaining_tags, temperature=temperature, **predict_kwargs)
+        return predicted_score
 
     def _determine_bars_step(self, nb_added_bars_step, remaining_bars):
         if nb_added_bars_step is not None:
