@@ -159,6 +159,44 @@ class MidiScore:
         return score
 
 
+    @classmethod
+    def concatenate_scores(cls, scores, axis=0):
+        """
+        Concatenate multiple scores along a specific axis (0 = horizontally, 1 = vertically)
+
+        For 0 axis concatenation, the number of tracks must be the same, the bars from left score are kept
+        For 1 axis concatenation, the number of bars must be the same, the tracks from the left score are kept
+
+        Parameters
+        ----------
+
+        scores : list
+            List of scores to concatenate with
+        axis : int (Default value = 0)
+            The axis along which to concatenate (0 = horizontally, 1 = vertically)
+
+        Returns
+        -------
+        MidiScore
+            The concatenated score
+
+        """
+        if axis == 0:
+            if len(scores) == 0:
+                raise ValueError("No score to concatenate")
+            new_score = scores[0].copy()
+            for score in scores[1:]:
+                new_score = new_score.concatenate(score, axis=0)
+            return new_score
+
+        if axis == 1:
+            if len(scores) == 0:
+                raise ValueError("No score to concatenate")
+            new_score = scores[0].copy()
+            for score in scores[1:]:
+                new_score = new_score.concatenate(score, axis=1)
+            return new_score
+
     def __getitem__(self, item):
         """
         Get the subscore corresponding to the items like the score was a matrix.
@@ -832,6 +870,33 @@ class MidiScore:
     def nb_bars(self):
         """ """
         return len(self.bars)
+
+
+    def cut_notes_at_the_end(self, only_end=True):
+        """
+        On last bar, cut duration of note if it goes after the bar duration
+
+        Parameters
+        ----------
+        only_end : boolean
+            Only cut the last bar (Default value = True)
+
+        """
+        score = self.copy()
+        for track_key in score.track_keys:
+            idx, program, is_drum = track_key
+            if not only_end:
+                selected_range = range(len(score.bars))
+            else:
+                selected_range = [len(score.bars) - 1]
+            for bar_idx in selected_range:
+                bar_duration = score.get_bar_duration(bar_idx)
+                for note_idx in range(len(score.tracks[track_key][bar_idx]["time"])):
+                    note_duration = score.tracks[track_key][bar_idx]["duration"][note_idx]
+                    note_time = score.tracks[track_key][bar_idx]["time"][note_idx]
+                    if note_time + note_duration > bar_duration:
+                        score.tracks[track_key][bar_idx]["duration"][note_idx] = bar_duration - note_time
+        return score
 
     def get_track_subset(self, start, end):
         """

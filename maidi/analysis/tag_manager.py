@@ -395,6 +395,42 @@ class TagManager:
         """
         return self.tags[track_index][bar_index]
 
+    def filter(self, function):
+        """
+        Filter the tags, keeping only the ones that match the function
+
+        Parameters
+        ----------
+        function : function
+            The function to filter the tags
+
+        Returns
+        -------
+        TagManager
+            The filtered tag manager
+
+        """
+        tags = [[list(filter(function, bar)) for bar in track] for track in self.tags]
+        return TagManager(tags)
+
+    def filter_remove(self, function):
+        """
+        Filter the tags, removing the ones that match the function
+
+        Parameters
+        ----------
+        function : function
+            The function to filter the tags
+
+        Returns
+        -------
+        TagManager
+            The filtered tag manager
+
+        """
+        tags = [[list(filter(lambda x: not function(x), bar)) for bar in track] for track in self.tags]
+        return TagManager(tags)
+
     def __getitem__(self, item):
         """
         Get the tags for a specific item

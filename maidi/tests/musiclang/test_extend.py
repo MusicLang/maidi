@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from unittest.mock import patch, MagicMock
-from maidi import MidiScore
+from maidi import MidiScore, TagManager
 from maidi.integrations.api import MusicLangAPI
 from maidi import instrument
 
@@ -17,6 +17,12 @@ def setup_api():
 @pytest.fixture
 def setup_score():
     instruments = [instrument.PIANO]
+    score = MidiScore.from_empty(instruments=instruments, nb_bars=8, ts=(4, 4), tempo=120)
+    return score
+
+@pytest.fixture
+def setup_score_two_tracks():
+    instruments = [instrument.PIANO, instrument.VIOLIN]
     score = MidiScore.from_empty(instruments=instruments, nb_bars=8, ts=(4, 4), tempo=120)
     return score
 
@@ -68,6 +74,58 @@ def test_extend(mock_predict, setup_api, setup_score):
     assert extended_score is not None
     assert extended_score.nb_bars == score.nb_bars + 8
 
+@patch.object(MusicLangAPI, 'predict')
+def test_extend_wrong_number_of_tags_track(mock_predict, setup_api, setup_score_two_tracks):
+    api = setup_api
+    score = setup_score_two_tracks
+
+    def predict_side_effect(predicted_score, *args, **kwargs):
+        return predicted_score
+
+    mock_predict.side_effect = predict_side_effect
+    mask, tags, chords = score.get_empty_controls()
+    tags = TagManager(tags)
+    tags_wrong = tags[1:, :4]  # NB BARS GOOD = 4, but wrong number of tracks
+
+    with pytest.raises(ValueError) as e:
+        api.extend(score, nb_bars_added=4, model="control_masking_large", nb_added_bars_step=None,
+                                chords=None, tags=tags_wrong, timeout=120, temperature=0.95, polling_interval=1)
+
+    assert "Wrong number of tracks in tags" in str(e.value)
+
+@patch.object(MusicLangAPI, 'predict')
+def test_extend_wrong_number_of_bars(mock_predict, setup_api, setup_score):
+    api = setup_api
+    score = setup_score
+
+    def predict_side_effect(predicted_score, *args, **kwargs):
+        return predicted_score
+
+    mock_predict.side_effect = predict_side_effect
+    mask, tags, chords = score.get_empty_controls()
+    tags = TagManager(tags)
+    tags_wrong = tags[:, :2]
+
+    with pytest.raises(ValueError) as e:
+        api.extend(score, nb_bars_added=4, model="control_masking_large", nb_added_bars_step=None,
+                                chords=None, tags=tags_wrong, timeout=120, temperature=0.95, polling_interval=1)
+
+    assert "Wrong number of bars in tags" in str(e.value)
+
+@patch.object(MusicLangAPI, 'predict')
+def test_extend_wrong_number_of_chords(mock_predict, setup_api, setup_score):
+    api = setup_api
+    score = setup_score
+
+    mask, tags, chords = score.get_empty_controls()
+    from maidi import ChordManager
+    chords_wrong = ChordManager(chords[:2])
+
+    with pytest.raises(ValueError) as e:
+        api.extend(score, nb_bars_added=4, model="control_masking_large", nb_added_bars_step=None,
+                                chords=chords_wrong, tags=None, timeout=120, temperature=0.95, polling_interval=1)
+
+    assert "Wrong number of chords" in str(e.value)
 
 
 if __name__ == "__main__":

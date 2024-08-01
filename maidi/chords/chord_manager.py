@@ -28,7 +28,14 @@ class ChordManager:
     def __init__(self, chords):
         if isinstance(chords, ChordManager):
             chords = chords.to_chords()
-        self.chords = [(*c, []) if len(c) == 4 else c for c in chords]
+
+        self.chords = []
+        for chord in chords:
+            if chord is None:
+                chord = self.get_none_chord()
+            elif len(chord) == 4:
+                chord = (*chord, [])
+            self.chords.append(chord)
 
     def get_chord(self, bar):
 
@@ -38,21 +45,43 @@ class ChordManager:
         if isinstance(item, slice):
             return ChordManager(self.chords[item])
         else:
-            return tuple(list(self.chords[item])[:4])
+            chord = self.chords[item]
+            return self.to_chord(chord)
 
     def __iter__(self):
         return iter(self.chords)
 
+    @classmethod
+    def to_chord(self, chord):
+        return tuple(list(chord)[:4]) if chord[0] is not None else None
+
+    @classmethod
+    def get_none_chord(cls):
+        return (None, None, None, [])
+
     def __setitem__(self, key, value):
-            if isinstance(value, str):
-                value = parse_roman_numeral_notation(value)
-                if isinstance(key, int):
-                    value = value[0]
 
             if isinstance(key, slice):
                 if isinstance(value, (tuple, list)) and not isinstance(value[0], (tuple, list)):
-                    value = [value for _ in key.indices(len(self.chords))]
+                    value = [value for _ in range(*key.indices(len(self.chords)))]
+                elif value is None:
+                    value = [self.get_none_chord() for _ in self.chords[key]]
+                elif isinstance(value, list):
+                    indices = range(*key.indices(len(self.chords)))
+                    expected_length = len(indices)
+                    if len(value) != expected_length:
+                        raise ValueError(f'Wrong number of chords assigned, expected {len(key.indices(len(self.chords)))}, got {len(value)}')
+                    value = [self.get_none_chord() if chord is None else chord for chord in value]
+                    for indice, val in zip(indices, value):
+                        self[indice] = val
 
+            elif isinstance(key, int):
+                if value is None:
+                    value = self.get_none_chord()
+                elif isinstance(value, str):
+                    value = parse_roman_numeral_notation(value)[0]
+
+            print(value)
             self.chords[key] = value
 
     def __len__(self):
@@ -62,8 +91,7 @@ class ChordManager:
         return f'ChordManager({self.chords})'
 
     def to_chords(self):
-        return deepcopy([tuple(list(chord)[:4]) for chord in self.chords])
-
+        return deepcopy([self.to_chord(chord) for chord in self.chords])
 
     @classmethod
     def parse_added_notes_as_tags(cls, added_notes):
