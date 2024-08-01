@@ -48,6 +48,7 @@ class MusicLangAPI(MidiApiIntegration):
 
     """
     PREDICT_ASYNC_ENDPOINT = "predict_long"
+    PREDICT_SYNC_ENDPOINT = "predict"
     POLLING_ENDPOINT = "polling_predict"
     MAX_CONTEXT = 16 # Maximum context size of 16 bars for all masking models
 
@@ -110,6 +111,22 @@ class MusicLangAPI(MidiApiIntegration):
         -------
 
         """
+        if model in models.ONLY_SYNC_MODELS:
+            if async_mode:
+                raise ValueError(f"Model {model} does not support async mode, use async_mode=False")
+            return self._predict_with_api_optimized(
+                score,
+                mask,
+                model=model,
+                temperature=temperature,
+                async_mode=async_mode,
+                polling_interval=polling_interval,
+                chords=chords,
+                tags=tags,
+                **prediction_kwargs,
+            )
+
+        # Otherwise we are not using an optimized model
         mask = np.asarray(mask)
         score.check_mask(mask)
         task_id = self._call_predict_api(
@@ -119,6 +136,26 @@ class MusicLangAPI(MidiApiIntegration):
             return task_id
         else:
             score = self.from_task_id(task_id, polling_interval=polling_interval)
+        return score
+
+
+    def _predict_with_api_optimized(self,
+                                    score,
+                                    mask,
+                                    model="control_masking_large",
+                                    temperature=0.95,
+                                    async_mode=False,
+                                    polling_interval=1,
+                                    chords=None,
+                                    tags=None,
+                                    **prediction_kwargs,
+                                    ):
+        mask = np.asarray(mask)
+        score.check_mask(mask)
+        result_base64 = self._call_predict_api_sync(
+            score.to_base64(), mask, model, temperature, chords, tags, **prediction_kwargs
+        )
+        score = MidiScore.from_base64(result_base64)
         return score
 
     def pprint(self, *args, **kwargs):
@@ -824,6 +861,51 @@ class MusicLangAPI(MidiApiIntegration):
         response.raise_for_status()
         return response.json()["task_id"]
 
+    def _call_predict_api_sync(
+            self, midi_base64, mask, model, temperature, chords, tags, **prediction_kwargs
+    ):
+        """
+        Protected method that actually prepare the payload and call the sync endpoint of API (reserved for some models)
+
+        Parameters
+        ----------
+        midi_base64 : str
+            Base64-encoded midi file
+
+        mask : np.Array
+            Array representing which bar of which track to regenerate
+
+        model : str
+         Model in model list, check user guide.
+
+        temperature : float
+            Temperature of the model, between 0 and 1.0
+
+        **prediction_kwargs : dict
+            Other model arguments
+
+        Returns
+        -------
+            task_id : str
+
+        """
+        url = os.path.join(self.api_url, self.PREDICT_SYNC_ENDPOINT)
+        payload = {
+            "model": model,
+            "temperature": temperature,
+            "mask": mask.tolist(),
+            "file": midi_base64,
+        }
+        if tags is not None:
+            payload['tags'] = tags
+        if chords is not None:
+            payload['chords'] = chords
+
+        payload.update(prediction_kwargs)
+        headers = {"x-api-key": self.api_key}
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        return response.json()['midi']
 
     def _create_temp_midi_files(self, score):
         """ """
