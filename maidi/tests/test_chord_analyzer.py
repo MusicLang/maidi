@@ -15,6 +15,13 @@ def test_split_by_tonality():
     ]
     assert split_by_tonality(example_harmonic_progression) == expected_output
 
+
+def test_missing_chords_ok():
+    chord_string = "C: I x IV"
+    assert parse_roman_numeral_notation(chord_string) == [
+        (0, 0, 'M', '', []), None, (3, 0, 'M', '', [])]
+
+
 def test_parse_chord_dict():
     test_cases = [
         ('#iv6', 'C:', {
@@ -95,6 +102,7 @@ def test_split_extension_and_added_notes():
     ]
     for extension, expected_output in test_cases:
         assert split_extension_and_added_notes(extension) == expected_output
+
 
 if __name__ == "__main__":
     pytest.main()

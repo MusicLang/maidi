@@ -1,8 +1,20 @@
 
+class Meta(type):
+    ALL = []
 
-class TagsCategory:
+    def __getitem__(self, arg):
+        return self.ALL[arg]
+
+    def __len__(self):
+        return len(self.ALL)
+
+
+class TagsCategory(metaclass=Meta):
+
+    tag_name = None
     ALL = []
     ranked = True
+
 
     @classmethod
     def higher(cls, tag):
@@ -23,8 +35,75 @@ class TagsCategory:
             return tag
         return cls.ALL[index - 1]
 
+    @classmethod
+    def add(cls, tag, value):
+        index = cls.ALL.index(tag)
+        new_value = index + value
+        if new_value < 0:
+            return cls.ALL[0]
+        if new_value >= len(cls.ALL):
+            return cls.ALL[-1]
+        return cls.ALL[new_value]
+
+    @property
+    def nb_tags(self):
+        return len(Tags.ALL)
+
+    @staticmethod
+    def get_tags_names():
+        return Tags.ALL
+
+    @classmethod
+    def __getitem__(cls, item):
+        return Tags.ALL[item]
+
+    @classmethod
+    def add_value(cls, tag_manager, value):
+        from maidi import TagManager
+        from copy import deepcopy
+        if not isinstance(tag_manager, TagManager):
+            tag_manager = TagManager(tag_manager)
+
+        new_array = deepcopy(tag_manager.tags)
+        for idx_track, track in enumerate(new_array):
+            for idx_bar, bar in enumerate(track):
+                for idx_value, tag in enumerate(bar):
+                    if tag.startswith(cls.tag_name):
+                        new_array[idx_track][idx_bar][idx_value] = cls.add(tag, value)
+
+        return TagManager(new_array)
+
+
+    @classmethod
+    def replace_tag(cls, tag_manager, tag_to_change, new_tag):
+        from maidi import TagManager
+        if not isinstance(tag_manager, TagManager):
+            tag_manager = TagManager(tag_manager)
+
+        return tag_manager.replace_tag(tag_to_change, new_tag)
+
+    @classmethod
+    def replace_all_with_tag(cls, tag_manager, new_tag):
+        from maidi import TagManager
+        from copy import deepcopy
+        if not isinstance(tag_manager, TagManager):
+            tag_manager = TagManager(tag_manager)
+
+        new_array = deepcopy(tag_manager.tags)
+        for idx_track, track in enumerate(new_array):
+            for idx_bar, bar in enumerate(track):
+                for idx_value, tag in enumerate(bar):
+                    if tag.startswith(cls.tag_name):
+                        new_array[idx_track][idx_bar][idx_value] = new_tag
+
+        return TagManager(new_array)
+
+
+
+
 class Density(TagsCategory):
 
+    tag_name = 'CONTROL_DENSITY__'
     lowest = 'CONTROL_DENSITY__LOWEST'
     lower = 'CONTROL_DENSITY__LOWER'
     low = 'CONTROL_DENSITY__LOW'
@@ -32,10 +111,10 @@ class Density(TagsCategory):
     medium = 'CONTROL_DENSITY__MEDIUM'
     high = 'CONTROL_DENSITY__HIGH'
     very_high = 'CONTROL_DENSITY__VERY_HIGH'
-
     ALL = [lowest, lower, low, medium_low, medium, high, very_high]
 
 class MinRegister(TagsCategory):
+    tag_name = 'CONTROL_MIN_REGISTER__'
 
     lowest = 'CONTROL_MIN_REGISTER__lowest'
     contrabass = 'CONTROL_MIN_REGISTER__contrabass'
@@ -53,6 +132,8 @@ class MinRegister(TagsCategory):
 
 
 class MaxRegister(TagsCategory):
+    tag_name = 'CONTROL_MAX_REGISTER__'
+
     lowest = 'CONTROL_MAX_REGISTER__lowest'
     contrabass = 'CONTROL_MAX_REGISTER__contrabass'
     bass = 'CONTROL_MAX_REGISTER__bass'
@@ -68,6 +149,7 @@ class MaxRegister(TagsCategory):
 
 
 class MinPolyphony(TagsCategory):
+    tag_name = 'CONTROL_MIN_POLYPHONY__'
 
     zero = 'CONTROL_MIN_POLYPHONY__0'
     one = 'CONTROL_MIN_POLYPHONY__1'
@@ -80,7 +162,7 @@ class MinPolyphony(TagsCategory):
     ALL = [zero, one, two, three, four, five, six]
 
 class MaxPolyphony(TagsCategory):
-
+        tag_name = 'CONTROL_MAX_POLYPHONY__'
         zero = 'CONTROL_MAX_POLYPHONY__0'
         one = 'CONTROL_MAX_POLYPHONY__1'
         two = 'CONTROL_MAX_POLYPHONY__2'
@@ -94,6 +176,8 @@ class MaxPolyphony(TagsCategory):
 
 class SpecialNotes(TagsCategory):
     ranked = False
+    tag_name = 'CONTROL_SPECIAL_NOTE__'
+
 
     eleventh = 'CONTROL_SPECIAL_NOTE__s3'
     ninth = 'CONTROL_SPECIAL_NOTE__s1'
@@ -112,7 +196,6 @@ class SpecialNotes(TagsCategory):
            minor_third, major_third, diminished_fifth, minor_sixth, major_sixth, minor_seventh, major_seventh]
 
 
-
 class Tags:
 
     density = Density
@@ -121,9 +204,7 @@ class Tags:
     min_polyphony = MinPolyphony
     max_polyphony = MaxPolyphony
     special_notes = SpecialNotes
-
     ALL = density.ALL + min_register.ALL + max_register.ALL + min_polyphony.ALL + max_polyphony.ALL + special_notes.ALL
 
-    @staticmethod
-    def get_tags_names():
-        return Tags.ALL
+
+

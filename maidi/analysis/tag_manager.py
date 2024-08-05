@@ -1,5 +1,7 @@
 
 from copy import deepcopy
+
+
 class TagManager:
 
     def __init__(self, tags):
@@ -15,6 +17,25 @@ class TagManager:
             self.tags = deepcopy(tags.tags)
         else:
             self.tags = deepcopy(tags)
+
+    def add_to_tag(self, tag_category, value):
+        return tag_category.add_value(self, value)
+
+    def replace_all_with_tag(self, tag_category, new_tag):
+        return tag_category.replace_all_with_tag(self, new_tag)
+
+    def replace_tag(self, tag_to_change, new_tag):
+        from maidi import TagManager
+        from copy import deepcopy
+        new_array = deepcopy(self.tags)
+        for idx_track, track in enumerate(new_array):
+            for idx_bar, bar in enumerate(track):
+                for idx_value, tag in enumerate(bar):
+                    if tag == tag_to_change:
+                        new_array[idx_track][idx_bar][idx_value] = new_tag
+
+        return TagManager(new_array)
+
 
     @classmethod
     def empty_from_score(cls, score):
@@ -505,9 +526,11 @@ class TagManager:
                     self.tags[item] = value
                 else:
                     raise ValueError("Invalid value type: must be a list of strings or a list of list of strings.")
+            elif value is None:
+                self.tags[item] = [[] for _ in range(len(self.tags[item]))]
             else:
                 raise ValueError(
-                    "Invalid value type: must be a TagManager, string, list of strings, or list of list of strings.")
+                    "Invalid value type: must be a TagManager, string, list of strings, None, or list of list of strings.")
         elif isinstance(item, slice):
             # Slice assignment
             if isinstance(value, TagManager):
@@ -569,9 +592,11 @@ class TagManager:
                         else:
                             raise ValueError(
                                 "Invalid value type: must be a list of strings or a list of list of strings.")
+                    elif value is None:
+                        self.tags[first_dim][second_dim] = [[] for _ in self.tags[first_dim][second_dim]]
                     else:
                         raise ValueError(
-                            "Invalid value type: must be a TagManager, string, list of strings, or list of list of strings.")
+                            "Invalid value type: must be a TagManager, string, None, list of strings, or list of list of strings.")
             elif isinstance(first_dim, slice):
                 if isinstance(second_dim, int):
                     # Single bar across multiple tracks
