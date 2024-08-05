@@ -228,8 +228,8 @@ class MusicLangAPI(MidiApiIntegration):
         mask = np.asarray(mask)
         if model not in models.MODELS:
             raise ValueError(f"Model {model} not existing. Models available : {models.MODELS}")
-        if temperature > 1.0:
-            raise ValueError("Temperature must be lower than 1.0")
+        if temperature > 2.0:
+            raise ValueError("Temperature must be lower than 2.0")
         if polling_interval < 0:
             raise ValueError("Polling interval must be > 0")
         if score.nb_bars > MusicLangAPI.MAX_CONTEXT:
