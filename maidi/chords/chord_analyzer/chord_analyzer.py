@@ -9,7 +9,7 @@ VALID_ADDED_NOTES = {'[add9]', '[addb9]', '[add11]', '[add#11]', '[add13]', '[ad
 
 
 CHORD_REGEX = re.compile(r"^(Ger|Cad|Fr|It|N|[#b]*[ivIV]+[o%ø+]?)(6|64|7|65|43|2)?(\(sus2\)|\(sus4\))?(\[add9\]|\[addb9\]|\[add11\]|\[add#11\]|\[add13\]|\[addb13\]|\[add#10\]|\[add#13\]|\[add#9\]|\[9\]|\[b9\]|\[11\]|\[#11\]|\[13\]|\[b13\]|\[#13\|\[#10\]])?(/[#b]*[ivIV]+)?$")
-CHORD_PROGRESSION_REGEX = re.compile(r"([A-Ga-g][#b]?:\s*)?((Ger|Cad|Fr|It|N|[#b]*[ivIV]+[o%ø+]?)(6|64|7|65|43|2)?(\(sus2\)|\(sus4\))?(\[add9\]|\[addb9\]|\[add11\]|\[add#11\]|\[add13\]|\[addb13\]|\[add#10\]|\[add#13\]|\[add#9\]|\[9\]|\[b9\]|\[11\]|\[#11\]|\[13\]|\[b13\]|\[#13\|\[#10\])?(/[#b]*[ivIV]+)?\s*)+")
+CHORD_PROGRESSION_REGEX = re.compile(r"(x\s*)?([A-Ga-g][#b]?:\s*)?((x|Ger|Cad|Fr|It|N|[#b]*[ivIV]+[o%ø+]?)(6|64|7|65|43|2)?(\(sus2\)|\(sus4\))?(\[add9\]|\[addb9\]|\[add11\]|\[add#11\]|\[add13\]|\[addb13\]|\[add#10\]|\[add#13\]|\[add#9\]|\[9\]|\[b9\]|\[11\]|\[#11\]|\[13\]|\[b13\]|\[#13\|\[#10\])?(/[#b]*[ivIV]+)?\s*)+")
 
 def split_by_tonality(input_string):
     """
@@ -60,11 +60,11 @@ def tonality_name_to_degree(main_tonality_degree):
     main_tonality_note_degree = TONALITIES_DICT[main_tonality_degree[0]]
 
     # Count the number of sharps in tonality
-    nb_sharps = re.findall("#", main_tonality_degree)
+    nb_sharps = re.findall("#", main_tonality_degree[1:])
     nb_sharps = len(nb_sharps)
 
     # Count the number of flats in tonality
-    nb_flats = re.findall("b", main_tonality_degree)
+    nb_flats = re.findall("b", main_tonality_degree[1:])
     nb_flats = len(nb_flats)
 
     # Determine the tonality degree modified with flats and sharps
@@ -175,6 +175,8 @@ def parse_chord(chord, tonality):
         Tuple: A tuple containing the parsed properties of the chord.
     """
     # Check valid chord
+    if chord == 'x':
+        return None
     if not CHORD_REGEX.match(chord):
         raise ValueError(f"Invalid chord: {chord}")
 

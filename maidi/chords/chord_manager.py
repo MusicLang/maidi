@@ -26,6 +26,7 @@ class ChordManager:
     tags = Tags
 
     def __init__(self, chords):
+
         if isinstance(chords, ChordManager):
             chords = chords.to_chords()
 
@@ -105,7 +106,14 @@ class ChordManager:
     @classmethod
     def from_roman_string(cls, roman_string):
 
-        chords = parse_roman_numeral_notation(roman_string)
-        chords = [(degree, tonality, mode, extension, cls.parse_added_notes_as_tags(added_notes)) for degree, tonality, mode, extension, added_notes in chords]
+        chords_candidate = parse_roman_numeral_notation(roman_string)
+
+        chords = []
+        for chord in chords_candidate:
+            if chord is None:
+                chords.append(None)
+            else:
+                degree, tonality, mode, extension, added_notes = chord
+                chords.append((degree, tonality, mode, extension, cls.parse_added_notes_as_tags(added_notes)))
 
         return cls(chords)

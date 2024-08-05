@@ -111,6 +111,7 @@ class MusicLangAPI(MidiApiIntegration):
         -------
 
         """
+
         if model in models.ONLY_SYNC_MODELS:
             if async_mode:
                 raise ValueError(f"Model {model} does not support async mode, use async_mode=False")
@@ -331,7 +332,6 @@ class MusicLangAPI(MidiApiIntegration):
             tags = tags.tags
         if isinstance(chords, ChordManager):
             chords = chords.to_chords()
-
         mask = self.check_parameters(score_to_predict,
                          mask=mask,
                          model=model,
@@ -339,6 +339,9 @@ class MusicLangAPI(MidiApiIntegration):
                          polling_interval=polling_interval,
                          tags=tags,
                          chords=chords)
+
+        if chords is None:
+            chords = [None] * score_to_predict.nb_bars
 
         result = self._predict_with_api(
             score_to_predict,
@@ -580,10 +583,13 @@ class MusicLangAPI(MidiApiIntegration):
         from maidi import TagManager, ChordManager
         if isinstance(chords, ChordManager):
             chords = chords.to_chords()
+        if isinstance(chords, str):
+            chords = ChordManager.from_roman_string(chords).to_chords()
         if isinstance(tags, TagManager):
             tags = tags.tags
         cm = ChordManager(chords) if chords is not None else None
         tm = TagManager(tags) if tags is not None else None
+
         if cm is not None:
             # Check size
             if len(cm) != nb_bars_added:
