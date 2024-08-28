@@ -178,7 +178,6 @@ class SpecialNotes(TagsCategory):
     ranked = False
     tag_name = 'CONTROL_SPECIAL_NOTE__'
 
-
     eleventh = 'CONTROL_SPECIAL_NOTE__s3'
     ninth = 'CONTROL_SPECIAL_NOTE__s1'
     sixth = 'CONTROL_SPECIAL_NOTE__s5'
@@ -192,8 +191,8 @@ class SpecialNotes(TagsCategory):
     minor_seventh = 'CONTROL_SPECIAL_NOTE__h10'
     major_seventh = 'CONTROL_SPECIAL_NOTE__h11'
 
-    ALL = [eleventh, ninth, sixth, diminished_ninth, major_second,
-           minor_third, major_third, diminished_fifth, minor_sixth, major_sixth, minor_seventh, major_seventh]
+    ALL = [diminished_ninth, major_second, ninth,
+           minor_third, major_third, eleventh, diminished_fifth, minor_sixth, sixth, major_sixth, minor_seventh, major_seventh]
 
 
 class Tags:
@@ -205,6 +204,19 @@ class Tags:
     max_polyphony = MaxPolyphony
     special_notes = SpecialNotes
     ALL = density.ALL + min_register.ALL + max_register.ALL + min_polyphony.ALL + max_polyphony.ALL + special_notes.ALL
+    CATEGORIES = [density, min_register, max_register, min_polyphony, max_polyphony, special_notes]
 
+    @classmethod
+    def is_in_categories(self, tag, categories):
+        for category in categories:
+            if tag.startswith(category.tag_name):
+                return True
+        return False
 
+    @classmethod
+    def add(self, tag, value):
+        # Find proper category for tag
+        for category in self.CATEGORIES:
+            if tag.startswith(category.tag_name):
+                return category.add(tag, value)
 
