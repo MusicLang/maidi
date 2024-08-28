@@ -852,7 +852,7 @@ class MusicLangAPI(MidiApiIntegration):
             task_id : str
 
         """
-        url = os.path.join(self.api_url, self.PREDICT_ASYNC_ENDPOINT)
+        url = self.api_url + "/" + self.PREDICT_ASYNC_ENDPOINT
         payload = {
             "model": model,
             "temperature": temperature,
@@ -898,7 +898,7 @@ class MusicLangAPI(MidiApiIntegration):
             task_id : str
 
         """
-        url = os.path.join(self.api_url, self.PREDICT_SYNC_ENDPOINT)
+        url = self.api_url + "/" + self.PREDICT_SYNC_ENDPOINT
         payload = {
             "model": model,
             "temperature": temperature,
