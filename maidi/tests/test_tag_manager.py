@@ -381,3 +381,14 @@ def test_setitem_tuple_slice_of_bars_across_tracks_list_of_lists(tag_manager):
         [["new_tag1"], ["new_tag2"]],
         [["new_tag3"], ["new_tag4"]]
     ]
+
+def test_add_bars(tag_manager):
+    tag_manager.add_bars(1)
+    assert tag_manager.tags == [
+        [["tag1", "tag2"], ["tag3"], []],
+        [["tag4"], ["tag5", "tag6"], []]
+    ]
+
+def test_empty():
+    tag_manager = TagManager.empty(2, 2)
+    assert tag_manager.tags == [[[], []], [[], []]]

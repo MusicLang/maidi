@@ -57,6 +57,54 @@ class TagManager:
         return cls(tags)
 
     @classmethod
+    def empty(cls, nb_tracks, nb_bars):
+        """
+        Create an empty tag manager
+
+        Parameters
+        ----------
+        nb_tracks : int
+            The number of tracks
+        nb_bars : int
+            The number of bars
+
+        Returns
+        -------
+        tag_manager : TagManager
+            The tag manager
+        """
+        tags = [[[] for _ in range(nb_bars)] for _ in range(nb_tracks)]
+        return cls(tags)
+
+    def add_noise(self, categories=None, proba=0.5, noise_range=(-2, 2)):
+        """
+        Add noise to the tags
+
+        Parameters
+        ----------
+        categories : list
+            The categories to add noise to
+        proba : float
+            The probability to add noise
+        noise_range : tuple
+            The range of the noise to add (uniform distribution), default is (-2, 2) which means that the noise will be
+            between -2 and 2 included
+        Returns
+        -------
+        None
+        """
+        from maidi import Tags
+        import random
+        if categories is None:
+            categories = Tags.CATEGORIES
+        for track in self.tags:
+            for bar in track:
+                for idx, tag in enumerate(bar):
+                    if Tags.is_in_categories(tag, categories) and random.random() < proba:
+                        bar[idx] = Tags.add(tag, random.choice(range(noise_range[0], noise_range[1] + 1)))
+        return self
+
+    @classmethod
     def from_chord_manager(cls, chord_manager, nb_tracks):
         """
         Create a tag manager from a score and a chord manager
@@ -481,6 +529,22 @@ class TagManager:
             if isinstance(second_dim, int):
                 return TagManager([[track[second_dim]] for track in tags_first_dim])
 
+    def add_bars(self, nb):
+        """
+        Add bars to the tag manager
+
+        Parameters
+        ----------
+        nb : int
+            The number of bars to add
+
+        Returns
+        -------
+        None
+
+        """
+        for track in self.tags:
+            track.extend([[] for _ in range(nb)])
 
     def __setitem__(self, item, value):
         """

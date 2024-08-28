@@ -228,8 +228,8 @@ class MusicLangAPI(MidiApiIntegration):
         mask = np.asarray(mask)
         if model not in models.MODELS:
             raise ValueError(f"Model {model} not existing. Models available : {models.MODELS}")
-        if temperature > 2.0:
-            raise ValueError("Temperature must be lower than 2.0")
+        if temperature > 100.0:
+            raise ValueError("Temperature must be lower than 100.0")
         if polling_interval < 0:
             raise ValueError("Polling interval must be > 0")
         if score.nb_bars > MusicLangAPI.MAX_CONTEXT:
@@ -311,8 +311,9 @@ class MusicLangAPI(MidiApiIntegration):
         polling_interval :
             int, interval in seconds to poll the API, only used if async_mode is False (Default value = 1)
 
-        chords: list[tuple or None ]  or None
-            List of tuple (chord_degree, tonality_degree, tonality_mode, roman numeral extension). Check the user guide for more information
+        chords: list[tuple or None ]  or str or None
+            List of tuple (chord_degree, tonality_degree, tonality_mode, roman numeral extension). Check the user guide for more information.
+            Can also be passed as a roman numeral string that can have "x" instead of chord to let the model choose (Eg : "c: i iv x i")
         tags: list[list[list]] or None (n_tracks, n_bars, <variable length number of tags>)
             Way to specify soft constraints on the generation for each bar of each track, check the user guide for more information
 
@@ -328,6 +329,8 @@ class MusicLangAPI(MidiApiIntegration):
         score_to_predict = score.copy()
 
         from maidi import TagManager, ChordManager
+        if isinstance(chords, str):
+            chords = ChordManager.from_roman_string(chords).to_chords()
         if isinstance(tags, TagManager):
             tags = tags.tags
         if isinstance(chords, ChordManager):

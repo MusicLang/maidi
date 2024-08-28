@@ -35,8 +35,8 @@ def test_invalid_temperature(setup_api, setup_score):
     score = setup_score
     mask = np.ones((1, 4))
     with pytest.raises(ValueError) as excinfo:
-        api.predict(score, mask, temperature=2.5)
-    assert "Temperature must be lower than 2.0" in str(excinfo.value)
+        api.predict(score, mask, temperature=101)
+    assert "Temperature must be lower than 100.0" in str(excinfo.value)
 
 def test_invalid_mask_dimension(setup_api, setup_score):
     api = setup_api

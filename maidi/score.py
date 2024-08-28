@@ -562,7 +562,6 @@ class MidiScore:
 
         return self.get_track_subset(start, end)
 
-
     def to_base64(self):
         """Transform the score to a base64 string
         :return:
@@ -574,12 +573,23 @@ class MidiScore:
         -------
 
         """
-        with tempfile.NamedTemporaryFile(suffix=".mid", delete=True) as midi_file:
-            self.write(midi_file.name)
-            with open(midi_file.name, "rb") as f:
+        try:
+            # Create a temporary file
+            with tempfile.NamedTemporaryFile(suffix=".mid", delete=False) as midi_file:
+                temp_file_name = midi_file.name
+                self.write(temp_file_name)
+
+            # Open the temporary file for reading
+            with open(temp_file_name, "rb") as f:
                 encoded_string = base64.b64encode(f.read()).decode()
-        # Remove the temporary file
-        return encoded_string
+
+            # Remove the temporary file
+            os.remove(temp_file_name)
+
+            return encoded_string
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
 
     def delete_bar(self, bar_index):
         """Delete a bar from the score
