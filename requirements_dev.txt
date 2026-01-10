@@ -9,3 +9,4 @@ furo
 pytest-cov
 sphinx_copybutton
 bump2version
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
